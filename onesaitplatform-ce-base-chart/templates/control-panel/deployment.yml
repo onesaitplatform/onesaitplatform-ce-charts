@@ -1,0 +1,188 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "onesait-platform.controlpanel.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "onesait-platform.controlpanel.name" . }}
+    group: {{ .Values.global.groupName }}
+spec:
+  replicas: {{ .Values.global.replicaInitCount }}
+  selector:
+    matchLabels:
+      app: {{ include "onesait-platform.controlpanel.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "onesait-platform.controlpanel.name" . }}
+    spec:
+{{- if .Values.global.affinityNodeRules }}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - {{ include "onesait-platform.controlpanel.name" . }}
+            topologyKey: "kubernetes.io/hostname"
+{{ end }}
+{{- if .Values.global.setNodesOnDeployments }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                {{- range .Values.global.workerNodes }}
+                - {{ .node }}
+                {{- end }}
+
+{{ end }}
+      containers:
+      - name: {{ include "onesait-platform.controlpanel.name" . }}
+        image: "{{ .Values.controlpanel.image.repository }}:{{ .Values.global.image.tag }}"
+        imagePullPolicy: {{ .Values.controlpanel.image.pullPolicy }}
+{{- if .Values.global.healthChecksEnabled }}
+        readinessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 200
+          periodSeconds: 5
+          successThreshold: 2
+          tcpSocket:
+            port: {{ .Values.controlpanel.service.targetPort }}
+          timeoutSeconds: 2
+{{- end }}
+        env:
+        - name: HZ_SERVICE_DISCOVERY_STRATEGY
+          value: "{{ .Values.global.env.hzServiceDiscoveryStrategy }}"
+        - name: SCHEDULERDBBURL
+          value: "{{ .Values.global.env.schedulerDbUrl }}"
+        - name: HZ_ZOOKEEPER_URL
+          value: "{{ .Values.global.env.hzZookeeperUrl }}"
+        - name: CAPTCHA_ON
+          value: "{{ .Values.controlpanel.env.capthaOn }}"
+        - name: CLOUD_GATEWAY
+          value: "https://{{ .Values.global.env.serverName }}"
+        - name: GRAVITEE_CLIENTID
+          value: "{{ .Values.controlpanel.env.graviteeClientId }}"
+        - name: GRAVITEE_CLIENTSECRET
+          value: "{{ .Values.controlpanel.env.graviteeClientSecret }}"
+        - name: GRAVITEE_ON
+          value: "{{ .Values.controlpanel.env.graviteeOn }}"
+        - name: KAFKAENABLED
+          value: "{{ .Values.global.env.kafkaEnabled }}"
+        - name: KAFKAHOST
+          value: "{{ .Values.global.env.kafkaHost }}"
+        - name: KSQLENABLE
+          value: "{{ .Values.controlpanel.env.ksqlEnable }}"
+        - name: SERVER_NAME
+          value: "{{ .Values.global.env.serverName }}"
+        - name: STREAMSETS_SDC_VERSION
+          value: "{{ .Values.controlpanel.env.streamsetsSdcVersion }}"
+        - name: TWOFA_ENABLED
+          value: "{{ .Values.controlpanel.env.tfaEnabled }}"
+        - name: AUDITGLOBALNOTIFY
+          value: "{{ .Values.controlpanel.env.auditGlobalNotify }}"
+        - name: CONFIGDBMASTERURL
+          value: "{{ .Values.global.env.configDbMasterUrl }}"
+        - name: CONFIGDBURL
+          value: "{{ .Values.global.env.configDbUrl }}"
+        - name: CONFIGDBUSER
+          value: "{{ .Values.global.env.configDbUser }}"
+        - name: CONFIGDBPASS
+          valueFrom:
+            secretKeyRef:
+              key: CONFIGDBPASS
+              name: onesait-secret
+        - name: REALTIMEDBUSER
+          value: "{{ .Values.global.env.realtimeDbUser }}"
+        - name: REALTIMEDBPASS
+          valueFrom:
+            secretKeyRef:
+              key: REALTIMEDBPASS
+              name: onesait-secret
+        - name: REALTIMEDBSERVERS
+          value: "{{ .Values.global.env.realtimeDbServers }}"
+        - name: ONESAIT_PROPERTIES
+          value: "{{ .Values.controlpanel.env.onesaitProperties }}"
+        - name: OPENDATA_URL
+          value: "{{ .Values.global.env.serverName}}{{ .Values.global.env.opendataPath}}"
+        ports:
+        - containerPort: {{ .Values.controlpanel.service.targetPort }}
+          name: 18000tcp18000
+          protocol: TCP
+        volumeMounts:
+{{- if .Values.global.webProjectsSharedPvc }}
+        - mountPath: /usr/local/webprojects
+          name: controlpanel-data
+{{- if (not .Values.global.localStorageEnabled) }}
+          subPath: controlpanel
+{{- end }}
+{{- end }}
+{{- if .Values.global.localStorageEnabled }}
+        - mountPath: /var/log/platform-logs
+          name: logs
+{{- end }}
+{{- if .Values.global.limitsEnabled }}
+        resources:
+          limits:
+            cpu: "2"
+            memory: "3Gi"
+          requests:
+            cpu: "1m"
+            memory: "1Mi"
+{{- end }}
+      dnsPolicy: ClusterFirst
+      initContainers:
+       - name: check-db-status
+         image: mariadb:10.3.22
+         imagePullPolicy: {{ .Values.configinit.image.pullPolicy }}
+         command: ['sh', '-c',
+          'until mysqladmin status -u root -pchangeIt! -h configdb -P 3306;
+          do echo waiting for database; sleep 2; done;']
+         env:
+         - name: MYSQL_ROOT_PASSWORD
+           value: "mypassword123"
+{{- if .Values.global.limitsEnabled }}
+         resources:
+           limits:
+             cpu: "1"
+             memory: "500Mi"
+           requests:
+             cpu: "1m"
+             memory: "1Mi"
+{{- end }}
+       - name: check-config-data
+         image: mariadb:10.3.22
+         imagePullPolicy: {{ .Values.configinit.image.pullPolicy }}
+         command: ["sh", "-c",
+          "until mysql -u root -pchangeIt! -h configdb -P 3306 onesaitplatform_config -e 'select count(*) from user';
+          do echo waiting for database to populate; sleep 5; done;"]
+         env:
+         - name: MYSQL_ROOT_PASSWORD
+           value: "mypassword123"
+{{- if .Values.global.limitsEnabled }}
+         resources:
+           limits:
+             cpu: "1"
+             memory: "500Mi"
+           requests:
+             cpu: "1m"
+             memory: "1Mi"
+{{- end }}
+      restartPolicy: Always
+      volumes:
+{{- if .Values.global.webProjectsSharedPvc }}
+      - name: controlpanel-data
+        persistentVolumeClaim:
+          claimName: controlpanel-pvc
+{{- end }}
+{{- if .Values.global.localStorageEnabled }}
+      - name: logs
+        persistentVolumeClaim:
+          claimName: logs-pvc
+{{- end }}

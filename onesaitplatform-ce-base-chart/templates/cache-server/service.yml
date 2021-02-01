@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "onesait-platform.cacheserver.name" . }}
+  namespace: {{ .Release.Namespace }}  
+  labels:
+    run: {{ include "onesait-platform.cacheserver.name" . }}
+    k8s-app: {{ include "onesait-platform.cacheserver.name" . }}
+spec:
+  ports:
+  - port: {{ .Values.cacheserver.service.port }}
+    protocol: TCP
+    targetPort: {{ .Values.cacheserver.service.targetPort }}
+  selector:
+    app: {{ include "onesait-platform.cacheserver.name" . }}
+  type: {{ .Values.cacheserver.service.type }}
+  sessionAffinity: None

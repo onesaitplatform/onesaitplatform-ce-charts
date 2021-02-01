@@ -1,0 +1,114 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "onesait-platform.loadbalancer.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "onesait-platform.loadbalancer.name" . }}
+    group: {{ .Values.global.groupName }}
+spec:
+  replicas: {{ .Values.global.replicaInitCount }}
+  selector:
+    matchLabels:
+      app: {{ include "onesait-platform.loadbalancer.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "onesait-platform.loadbalancer.name" . }}
+    spec:
+{{- if .Values.global.affinityNodeRules }}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - {{ include "onesait-platform.loadbalancer.name" . }}
+            topologyKey: "kubernetes.io/hostname"
+{{ end }}
+{{- if .Values.global.setNodesOnDeployments }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                {{- range .Values.global.workerNodes }}
+                - {{ .node }}
+                {{- end }}
+
+{{ end }}
+      containers:
+      - name: {{ include "onesait-platform.loadbalancer.name" . }}
+        imagePullPolicy: {{ .Values.loadbalancer.image.pullPolicy }}
+{{- if .Values.global.healthChecksEnabled }}
+        readinessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 50
+          periodSeconds: 5
+          successThreshold: 2
+          tcpSocket:
+            port: {{ .Values.loadbalancer.service.https.port }}
+          timeoutSeconds: 2
+{{- end }}
+        image: "{{ .Values.loadbalancer.image.repository }}:{{ .Values.loadbalancer.image.tag }}"
+        ports:
+        - containerPort: {{ .Values.loadbalancer.service.https.port }}
+          name: 8443tcp84432
+          protocol: TCP
+        - containerPort: {{ .Values.loadbalancer.service.http.port }}
+          name: 9443tcp94432
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /tmp
+          readOnly: true
+          name: ssl-data
+{{- if .Values.global.webProjectsSharedPvc }}
+        - mountPath: /usr/local/webprojects
+          readOnly: true
+          name: webprojects-data
+{{- end }}
+{{- if .Values.global.nginxConfPersistenceEnabled }}
+        - mountPath: /opt/bitnami/nginx/conf/server_blocks
+          readOnly: false
+          name: nginx-conf
+{{- end }}
+{{- if .Values.global.nginxConfigAsConfigMap }}
+        - mountPath: /opt/bitnami/nginx/conf/server_blocks
+          readOnly: false
+          name: nginx-conf
+{{- end }}
+{{- if .Values.global.limitsEnabled }}
+        resources:
+          limits:
+            cpu: "50m"
+            memory: "250Mi"
+          requests:
+            cpu: "25m"
+            memory: "50Mi"
+{{- end }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      volumes:
+      - name: ssl-data
+        secret:
+          secretName: loadbalancersecret
+{{- if .Values.global.webProjectsSharedPvc }}
+      - name: webprojects-data
+        persistentVolumeClaim:
+          claimName: controlpanel-pvc
+{{- end }}
+{{- if .Values.global.nginxConfPersistenceEnabled }}
+      - name: nginx-conf
+        persistentVolumeClaim:
+          claimName: loadbalancer-pvc
+{{- end }}
+{{- if .Values.global.nginxConfigAsConfigMap }}
+      - name: nginx-conf
+        configMap:
+          name: loadbalancer-config
+{{- end }}

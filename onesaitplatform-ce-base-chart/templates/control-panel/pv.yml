@@ -1,0 +1,33 @@
+{{- if .Values.global.localStorageEnabled }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: controlpanel-pv-volume
+  namespace: {{ .Release.Namespace }}
+  labels:
+    type: local
+spec:
+  storageClassName: {{ .Values.global.storageClassName }}
+  capacity:
+    storage: {{ .Values.controlpanel.storage.size }}
+{{- if .Values.global.setNodesOnDeployments }}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          {{- range .Values.global.workerNodes }}
+          - {{ .node }}
+          {{- end }}
+{{- end }}
+  accessModes:
+{{- if .Values.global.webProjectsSharedPvc }}
+    - ReadWriteMany
+{{- else }}
+    - ReadWriteOnce
+{{- end }}    
+  hostPath:
+    path: {{ .Values.global.localStoragePath }}/onesaitplatform/webprojects
+{{- end }}

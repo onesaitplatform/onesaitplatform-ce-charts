@@ -1,0 +1,13 @@
+# Global Variables
+global:
+  groupName: onesait-platform
+  storageClassName: managed-premium
+  storageClassProvisioned: false
+  logStorageClassName: Azurefile
+  localStorageEnabled: false
+  image:
+    tag: 2.1.0-ce
+  env:
+    serverName: "example.onesaitplatform.com"
+    kafkaEnabled: "true"
+    ingressHostName: example.onesaitplatform.com

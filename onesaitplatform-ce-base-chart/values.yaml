@@ -1,0 +1,248 @@
+# Global Variables
+global:
+  groupName: onesait-platform
+  replicaCount: 0
+  replicaInitCount: 1
+  limitsEnabled: true
+  localStorageEnabled: false
+  localStoragePath: /datadrive
+  healthChecksEnabled: true
+  sideCarContainersEnabled: false
+  storageClassName: managed-premium
+  storageClassProvisioned: false
+  logStorageClassName: Azurefile
+  logStoragesize: 20Gi
+  storageClassOnPvcsEnabled: false
+  loadbalancerExternalTrafficPolicyClusterEnabled: false
+  affinityNodeRules: false
+  nginxConfPersistenceEnabled: false
+  nginxConfigAsConfigMap: true
+  webProjectsSharedPvc: false
+  deploySchedulerDb: false
+  deployQuasar: false
+  deployConfigInit: false
+  setNodesOnDeployments: false
+  workerNodes:
+    - node: worker
+    - node: worker2
+  image:
+    tag: 2.1.0-ce
+  env:
+    serverName: "localhost"
+    configDbMasterUrl: "jdbc:mysql://configdb:3306/onesaitplatform_master_config?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&useSSL=false&autoReconnect=true"
+    configDbUrl: "jdbc:mysql://configdb:3306/onesaitplatform_config?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&useSSL=true&autoReconnect=true&nullDatabaseMeansCurrent=true"
+    schedulerDbUrl: "jdbc:mysql://configdb:3306/onesaitplatform_scheduler?useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&useSSL=false&autoReconnect=true"
+    configDbUser: "root"
+    configDbPass: "changeIt!"
+    realtimeDbUser: "platformadmin"
+    realtimeDbPass: "0pen-platf0rm-2018!"
+    realtimeDbWriteConcern: "UNACKNOWLEDGED"
+    realtimeDbServers: "realtimedb:27017"
+    realtimeDbName: "onesaitplatform_rtdb"
+    kafkaEnabled: "false"
+    kafkaHost: kafkaservice
+    hzServiceDiscoveryStrategy: zookeeper
+    hzZookeeperUrl: zookeeper:2181
+    ingressHostName: example.onesaitplatform.com
+
+# Variables for configdb deployment/service/storage
+configdb:
+  nameOverride: configdb
+  image:
+    repository: registry.onesaitplatform.com/onesaitplatform/configdb
+    tag: mariadb
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 3306
+    targetPort: 3306
+  storage:
+    size: 1Gi
+
+# Variables for schedulerdb deployment/service/storage
+schedulerdb:
+  nameOverride: schedulerdb
+  image:
+    repository: registry.onesaitplatform.com/onesaitplatform/schedulerdb
+    tag: mariadb
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 3306
+    targetPort: 3306
+  storage:
+    size: 10Gi
+
+# Variables for realtimedb deployment/service/storage
+realtimedb:
+  nameOverride: realtimedb
+  image:
+    repository: registry.onesaitplatform.com/onesaitplatform/realtimedb
+    tag: 4.4
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 27017
+    targetPort: 27017
+  storage:
+    size: 30Gi
+
+# Variables for quasar deployment/service
+quasar:
+  nameOverride: quasar
+  image:
+    repository: registry.onesaitplatform.com/onesaitplatform/quasar
+    tag: 14
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 10800
+    targetPort: 10800
+  env:
+    realtimeDbServers: realtimedb:27017
+    authDb: "admin"
+    authParams: "platformadmin:0pen-platf0rm-2018!@"
+
+# Variables for zookeeper deployment/service
+zookeeper:
+  nameOverride: zookeeper
+  image:
+    repository: registry.onesaitplatform.com/onesaitplatform/zookeeper-secured
+    tag: stable
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 2181
+    targetPort: 2181
+  env:
+    zookeperClientPort: "2181"
+
+# Variables for kafka deployment/service
+kafka:
+  nameOverride: kafkaservice
+  image:
+    repository: registry.onesaitplatform.com/onesaitplatform/kafka-secured
+    tag: stable
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    tcp:
+      port: 9092
+      targetPort: 9092
+    tls:
+      port: 9095
+      targetPort: 9095
+  env:
+    kafkaListeners: "SASL_PLAINTEXT://:9095,PLAINTEXT://:9092"
+    kafkaOffsetTopicReplFactor: "1"
+    kafkaZookeeperConnect: "zookeeper:2181"
+    kafkaAdvertisedListeners: "SASL_PLAINTEXT://kafkaservice:9095,PLAINTEXT://kafkaservice:9092"
+    kafkaSuperUsers: "User:admin"
+    serverName: "localhost"
+  storage:
+    size: 21Gi
+
+# Variables for elasticdb deployment/service/storage
+elasticdb:
+  nameOverride: elasticdb
+  image:
+    repository: registry.onesaitplatform.com/onesaitplatform/elasticdb
+    tag: stable
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    tcp1:
+      port: 9200
+      targetPort: 9200
+    tcp2:
+      port: 9300
+      targetPort: 9300
+  storage:
+    size: 10Gi
+
+# Variables for configinit deployment
+configinit:
+  nameOverride: configinit
+  image:
+    repository: registry.onesaitplatform.com/onesaitplatform/configinit
+    pullPolicy: Always
+  env:
+    loadElasticDb: "false"
+    loadMongoDb: "false"
+    multitenantMode: "false"
+    configDbMasterUrlCreateIfNotExists: "&createDatabaseIfNotExist=true"
+    onesaitProperties:
+
+# Variables for controlpanel deployment
+controlpanel:
+  nameOverride: controlpanelservice
+  image:
+    repository: registry.onesaitplatform.com/onesaitplatform/controlpanel
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 18000
+    targetPort: 18000
+  env:
+    capthaOn: "false"
+    graviteeClientId: onesait
+    graviteeClientSecret: admin
+    graviteeOn: "false"
+    ksqlEnable: "false"
+    streamsetsSdcVersion: "3.10.0"
+    tfaEnabled: "false"
+    auditGlobalNotify: "false"
+    onesaitProperties:
+  storage:
+    accessMode: ReadWriteOnce
+    size: 2Gi
+
+# Variables for cacheserver deployment
+cacheserver:
+  nameOverride: cacheservice
+  image:
+    repository: registry.onesaitplatform.com/onesaitplatform/cacheservice
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 20001
+    targetPort: 20001
+  env:
+    onesaitProperties:
+
+# Variables for monitoringuiservice deployment/service
+monitoringui:
+  nameOverride: monitoringuiservice
+  image:
+    repository: registry.onesaitplatform.com/onesaitplatform/monitoringui
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 18100
+    targetPort: 18100
+  env:
+    onesaitProperties:
+
+# Variables for load balancer / reverse proxy deployment/service
+# IMPORTANT: Use mainline tag for all modules deployed
+loadbalancer:
+  nameOverride: loadbalancer
+  image:
+    repository: registry.onesaitplatform.com/onesaitplatform/loadbalancer
+    tag: full
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    hostIp: localhost
+    http:
+      port: 9443
+      targetPort: 9443
+    https:
+      port: 8443
+      targetPort: 8443
+  storage:
+    size: 5Gi
+
+# Variables for ingress
+loadbalanceringress:
+  nameOverride: loadbalanceringress

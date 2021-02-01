@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "onesait-platform.loadbalancer.name" . }}
+  namespace: {{ .Release.Namespace }}
+{{- if .Values.global.loadbalancerExternalTrafficPolicyClusterEnabled }}
+  annotations:
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+{{- end }}
+  labels:
+    run: {{ include "onesait-platform.loadbalancer.name" . }}
+    k8s-app: {{ include "onesait-platform.loadbalancer.name" . }}
+spec:
+{{- if .Values.global.loadbalancerExternalTrafficPolicyClusterEnabled }}
+  externalTrafficPolicy: Cluster
+{{- end }}
+  ports:
+  - name: https
+    port: {{ .Values.loadbalancer.service.https.port }}
+    protocol: TCP
+    targetPort: {{ .Values.loadbalancer.service.https.targetPort }}
+  - name: http
+    port: {{ .Values.loadbalancer.service.http.port }}
+    protocol: TCP
+    targetPort: {{ .Values.loadbalancer.service.http.targetPort }}
+  selector:
+    app: {{ include "onesait-platform.loadbalancer.name" . }}
+  type: {{ .Values.loadbalancer.service.type }}
+{{- if .Values.global.loadbalancerExternalTrafficPolicyClusterEnabled }}
+  loadBalancerIP: "{{ .Values.loadbalancer.service.hostIp }}"
+{{- end }}
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800

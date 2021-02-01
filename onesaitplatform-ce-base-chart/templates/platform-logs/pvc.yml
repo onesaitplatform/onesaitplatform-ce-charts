@@ -1,0 +1,16 @@
+{{- if .Values.global.localStorageEnabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: logs-pvc
+  namespace: {{ .Release.Namespace }}
+spec:
+  accessModes:
+  - ReadWriteMany
+  volumeMode: Filesystem
+  volumeName: logs-pv-volume
+  storageClassName: {{ .Values.global.logStorageClassName }}
+  resources:
+    requests:
+      storage: {{ .Values.global.logStoragesize }}
+{{- end }}

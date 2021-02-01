@@ -1,0 +1,21 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {{ include "onesait-platform.ingress.name" . }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/proxy-body-size: "256m"
+spec:
+  tls:
+  - hosts:
+    - {{ .Values.global.env.ingressHostName }}
+    secretName: loadbalancersecret
+  rules:
+  - host: {{ .Values.global.env.ingressHostName }}
+    http:
+      paths:
+      - backend:
+          serviceName: {{ include "onesait-platform.loadbalancer.name" . }}
+          servicePort: {{ .Values.loadbalancer.service.http.port }}
+        path: /

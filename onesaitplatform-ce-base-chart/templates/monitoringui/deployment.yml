@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "onesait-platform.monitoringui.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "onesait-platform.monitoringui.name" . }}
+    group: {{ .Values.global.groupName }}
+spec:
+  replicas: {{ .Values.global.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "onesait-platform.monitoringui.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "onesait-platform.monitoringui.name" . }}
+    spec:
+{{- if .Values.global.affinityNodeRules }}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - {{ include "onesait-platform.monitoringui.name" . }}
+            topologyKey: "kubernetes.io/hostname"
+{{ end }}
+{{- if .Values.global.setNodesOnDeployments }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                {{- range .Values.global.workerNodes }}
+                - {{ .node }}
+                {{- end }}
+
+{{ end }}
+      containers:
+      - name: {{ include "onesait-platform.monitoringui.name" . }}
+        image: "{{ .Values.monitoringui.image.repository }}:{{ .Values.global.image.tag }}"
+        imagePullPolicy: {{ .Values.monitoringui.image.pullPolicy }}
+{{- if .Values.global.healthChecksEnabled }}
+        readinessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 100
+          periodSeconds: 5
+          successThreshold: 2
+          tcpSocket:
+            port: {{ .Values.monitoringui.service.targetPort }}
+          timeoutSeconds: 2
+{{- end }}
+        env:
+        - name: SERVER_NAME
+          value: "{{ .Values.global.env.serverName }}"
+        - name: CONFIGDBMASTERURL
+          value: "{{ .Values.global.env.configDbMasterUrl }}"
+        - name: CONFIGDBURL
+          value: "{{ .Values.global.env.configDbUrl }}"
+        - name: CONFIGDBUSER
+          value: "{{ .Values.global.env.configDbUser }}"
+        - name: CONFIGDBPASS
+          value: "{{ .Values.global.env.configDbPass }}"
+        - name: REALTIMEDBUSER
+          value: "{{ .Values.global.env.realtimeDbUser }}"
+        - name: REALTIMEDBPASS
+          value: "{{ .Values.global.env.realtimeDbPass }}"
+        - name: ONESAIT_PROPERTIES
+          value: "{{ .Values.monitoringui.env.onesaitProperties }}"
+        ports:
+        - containerPort: {{ .Values.monitoringui.service.targetPort }}
+          name: 18100tcp18100
+          protocol: TCP
+{{- if .Values.global.localStorageEnabled }}
+        volumeMounts:
+        - mountPath: /var/log/platform-logs
+          name: logs
+{{- end }}
+{{- if .Values.global.limitsEnabled }}
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "2Gi"
+          requests:
+            cpu: "1m"
+            memory: "1Mi"
+{{- end }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+{{- if .Values.global.localStorageEnabled }}
+      volumes:
+      - name: logs
+        persistentVolumeClaim:
+          claimName: logs-pvc
+{{- end }}

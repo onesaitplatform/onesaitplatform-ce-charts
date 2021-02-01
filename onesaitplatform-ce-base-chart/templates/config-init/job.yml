@@ -1,0 +1,121 @@
+{{- if (not .Values.global.deployConfigInit) }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "onesait-platform.configinit.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "onesait-platform.configinit.name" . }}
+    group: {{ .Values.global.groupName }}
+spec:
+  template:
+    spec:
+      containers:
+      - name: load-realtimedb
+        image: "{{ .Values.configinit.image.repository }}:{{ .Values.global.image.tag }}"
+        imagePullPolicy: {{ .Values.configinit.image.pullPolicy }}
+        env:
+        - name: LOADELASTICDB
+          value: "{{ .Values.configinit.env.loadElasticDb }}"
+        - name: LOADCONFIGDB
+          value: "false"
+        - name: LOADMONGODB
+          value: "false"
+        - name: SERVER_NAME
+          value: "{{ .Values.global.env.serverName }}"
+        - name: CONFIGDBMASTERURL
+          value: "{{ .Values.global.env.configDbMasterUrl }}{{.Values.configinit.env.configDbMasterUrlCreateIfNotExists}}"
+        - name: CONFIGDBURL
+          value: "{{ .Values.global.env.configDbUrl }}"
+        - name: CONFIGDBUSER
+          value: "{{ .Values.global.env.configDbUser }}"
+        - name: CONFIGDBPASS
+          valueFrom:
+            secretKeyRef:
+              key: CONFIGDBPASS
+              name: onesait-secret
+        - name: REALTIMEDBUSER
+          value: "{{ .Values.global.env.realtimeDbUser }}"
+        - name: REALTIMEDBPASS
+          valueFrom:
+            secretKeyRef:
+              key: REALTIMEDBPASS
+              name: onesait-secret
+        - name: REALTIMEDBSERVERS
+          value: "{{ .Values.global.env.realtimeDbServers }}"
+        - name: REALTIMEDBNAME
+          value: "{{ .Values.global.env.realtimeDbName }}"
+        - name: UPDATE_MODE_MULTITENANT
+          value: "{{ .Values.configinit.env.multitenantMode }}"
+        - name: ONESAIT_PROPERTIES
+          value: "{{ .Values.configinit.env.onesaitProperties }}"
+        ports:
+        - containerPort: 21000
+          name: 21000tcp210002
+          protocol: TCP
+{{- if .Values.global.limitsEnabled }}
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "2Gi"
+          requests:
+            cpu: "1m"
+            memory: "1Mi"
+{{- end }}
+      restartPolicy: Never
+      initContainers:
+       - name: check-db-status
+         image: mariadb:10.3.22
+         imagePullPolicy: {{ .Values.configinit.image.pullPolicy }}
+         command: ['sh', '-c',
+          'until mysqladmin status -u root -pchangeIt! -h configdb -P 3306;
+          do echo waiting for database; sleep 2; done;']
+         env:
+         - name: MYSQL_ROOT_PASSWORD
+           value: "mypassword123"
+{{- if .Values.global.limitsEnabled }}
+         resources:
+           limits:
+             cpu: "1"
+             memory: "500Mi"
+           requests:
+             cpu: "1m"
+             memory: "1Mi"
+{{- end }}
+       - name: load-configdb
+         image: {{ .Values.configinit.image.repository }}:{{ .Values.global.image.tag }}
+         imagePullPolicy: {{ .Values.configinit.image.pullPolicy }}
+         env:
+         - name: LOADELASTICDB
+           value: "{{ .Values.configinit.env.loadElasticDb }}"
+         - name: LOADMONGODB
+           value: "false"
+         - name: SERVER_NAME
+           value: "{{ .Values.global.env.serverName }}"
+         - name: CONFIGDBMASTERURL
+           value: "{{ .Values.global.env.configDbMasterUrl }}{{.Values.configinit.env.configDbMasterUrlCreateIfNotExists}}"
+         - name: CONFIGDBURL
+           value: "{{ .Values.global.env.configDbUrl }}"
+         - name: CONFIGDBUSER
+           value: "{{ .Values.global.env.configDbUser }}"
+         - name: REALTIMEDBUSER
+           value: "{{ .Values.global.env.realtimeDbUser }}"
+         - name: REALTIMEDBSERVERS
+           value: "{{ .Values.global.env.realtimeDbServers }}"
+         - name: REALTIMEDBNAME
+           value: "{{ .Values.global.env.realtimeDbName }}"
+         - name: UPDATE_MODE_MULTITENANT
+           value: "{{ .Values.configinit.env.multitenantMode }}"
+         - name: ONESAIT_PROPERTIES
+           value: "{{ .Values.configinit.env.onesaitProperties }}"
+{{- if .Values.global.limitsEnabled }}
+         resources:
+           limits:
+             cpu: "500m"
+             memory: "2Gi"
+           requests:
+             cpu: "1m"
+             memory: "1Mi"
+{{- end }}
+  backoffLimit: 1
+{{- end }}

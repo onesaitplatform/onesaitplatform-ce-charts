@@ -1,0 +1,89 @@
+{{- if .Values.global.deploySchedulerDb }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "onesait-platform.schedulerdb.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "onesait-platform.schedulerdb.name" . }}
+    group: {{ .Values.global.groupName }}
+spec:
+  replicas: {{ .Values.global.replicaInitCount }}
+  selector:
+    matchLabels:
+      app: {{ include "onesait-platform.schedulerdb.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "onesait-platform.schedulerdb.name" . }}
+    spec:
+{{- if .Values.global.setNodesOnDeployments }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                {{- range .Values.global.workerNodes }}
+                - {{ .node }}
+                {{- end }}
+
+{{ end }}
+      containers:
+      - name: {{ include "onesait-platform.schedulerdb.name" . }}
+        image: "{{ .Values.schedulerdb.image.repository }}:{{ .Values.schedulerdb.image.tag }}"
+        imagePullPolicy: {{ .Values.schedulerdb.image.pullPolicy }}
+{{- if .Values.global.healthChecksEnabled }}
+        readinessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 100
+          periodSeconds: 5
+          successThreshold: 2
+          tcpSocket:
+            port: {{ .Values.schedulerdb.service.targetPort }}
+          timeoutSeconds: 2
+{{- end }}
+        ports:
+        - containerPort: {{ .Values.schedulerdb.service.targetPort }}
+          name: 3306tcp33062
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /var/lib/mysql
+          name: schedulerdb-data
+{{- if (not .Values.global.localStorageEnabled) }}
+          subPath: schedulerdb
+{{- end }}
+{{- if .Values.global.limitsEnabled }}
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "500Mi"
+          requests:
+            cpu: "1m"
+            memory: "1Mi"
+{{- end }}
+      dnsPolicy: ClusterFirst
+{{- if .Values.global.sideCarContainersEnabled }}
+      initContainers:
+       - name: volume-mount
+         image: busybox
+         command: ["sh", "-c", "chmod 777 /var/lib/mysql"]
+         volumeMounts:
+         - name: schedulerdb-data
+           mountPath: /var/lib/mysql
+         resources:
+           limits:
+             cpu: "1"
+             memory: "500Mi"
+           requests:
+             cpu: "1m"
+             memory: "1Mi"
+{{- end }}
+      restartPolicy: Always
+      volumes:
+      - name: schedulerdb-data
+        persistentVolumeClaim:
+          claimName: schedulerdb-pvc
+{{- end }}

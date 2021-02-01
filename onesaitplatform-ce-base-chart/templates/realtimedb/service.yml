@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "onesait-platform.realtimedb.name" . }}
+  namespace: {{ .Release.Namespace }}  
+  labels:
+    run: {{ include "onesait-platform.realtimedb.name" . }}
+    k8s-app: {{ include "onesait-platform.realtimedb.name" . }}
+spec:
+  ports:
+  - port: {{ .Values.realtimedb.service.port }}
+    protocol: TCP
+    targetPort: {{ .Values.realtimedb.service.targetPort }}
+  selector:
+    app: {{ include "onesait-platform.realtimedb.name" . }}
+  type: {{ .Values.realtimedb.service.type }}
+  sessionAffinity: None

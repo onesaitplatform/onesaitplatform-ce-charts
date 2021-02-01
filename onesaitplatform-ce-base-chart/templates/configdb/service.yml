@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "onesait-platform.configdb.name" . }}
+  namespace: {{ .Release.Namespace }}  
+  labels:
+    run: {{ include "onesait-platform.configdb.name" . }}
+    k8s-app: {{ include "onesait-platform.configdb.name" . }}
+spec:
+  ports:
+  - port: {{ .Values.configdb.service.port }}
+    protocol: TCP
+    targetPort: {{ .Values.configdb.service.targetPort }}
+  selector:
+    app: {{ include "onesait-platform.configdb.name" . }}
+  type: {{ .Values.configdb.service.type }}
+  sessionAffinity: None

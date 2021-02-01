@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "onesait-platform.monitoringui.name" . }}
+  namespace: {{ .Release.Namespace }}  
+  labels:
+    run: {{ include "onesait-platform.monitoringui.name" . }}
+    k8s-app: {{ include "onesait-platform.monitoringui.name" . }}
+spec:
+  ports:
+  - port: {{ .Values.monitoringui.service.port }}
+    protocol: TCP
+    targetPort: {{ .Values.monitoringui.service.targetPort }}
+  selector:
+    app: {{ include "onesait-platform.monitoringui.name" . }}
+  type: {{ .Values.monitoringui.service.type }}
+  sessionAffinity: None

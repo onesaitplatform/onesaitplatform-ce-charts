@@ -1,0 +1,99 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "onesait-platform.kafka.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "onesait-platform.kafka.name" . }}
+    group: {{ .Values.global.groupName }}
+spec:
+  replicas: {{ .Values.global.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "onesait-platform.kafka.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "onesait-platform.kafka.name" . }}
+    spec:
+{{- if .Values.global.affinityNodeRules }}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - {{ include "onesait-platform.kafka.name" . }}
+            topologyKey: "kubernetes.io/hostname"
+{{ end }}
+{{- if .Values.global.setNodesOnDeployments }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                {{- range .Values.global.workerNodes }}
+                - {{ .node }}
+                {{- end }}
+
+{{ end }}
+      containers:
+      - name: {{ include "onesait-platform.kafka.name" . }}
+        image: "{{ .Values.kafka.image.repository }}:{{ .Values.kafka.image.tag }}"
+        imagePullPolicy: {{ .Values.kafka.image.pullPolicy }}
+{{- if .Values.global.healthChecksEnabled }}
+        readinessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 100
+          periodSeconds: 5
+          successThreshold: 2
+          tcpSocket:
+            port: {{ .Values.kafka.service.tcp.targetPort }}
+          timeoutSeconds: 2
+{{- end }}
+        env:
+        - name: KAFKA_LISTENERS
+          value: "{{ .Values.kafka.env.kafkaListeners }}"
+        - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+          value: "{{ .Values.kafka.env.kafkaOffsetTopicReplFactor }}"
+        - name: KAFKA_ZOOKEEPER_CONNECT
+          value: "{{ .Values.kafka.env.kafkaZookeeperConnect }}"
+        - name: SERVER_NAME
+          value: "{{ .Values.kafka.env.serverName }}"
+        - name: KAFKA_ADVERTISED_LISTENERS
+          value: "{{ .Values.kafka.env.kafkaAdvertisedListeners }}"
+        - name: KAFKA_SUPER_USERS
+          value: "{{ .Values.kafka.env.kafkaSuperUsers }}"
+        ports:
+        - containerPort: {{ .Values.kafka.service.tcp.targetPort }}
+          name: 9092tcp9092
+          protocol: TCP
+        - containerPort: {{ .Values.kafka.service.tls.targetPort }}
+          name: 9095tcp9095
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /var/lib/kafka/data
+          name: kafka-data
+{{- if (not .Values.global.localStorageEnabled) }}
+          subPath: kafka
+{{- end }}
+{{- if .Values.global.limitsEnabled }}
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "1Gi"
+          requests:
+            cpu: "1m"
+            memory: "1Mi"
+{{- end }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      volumes:
+      - name: kafka-data
+        persistentVolumeClaim:
+          claimName: kafka-pvc

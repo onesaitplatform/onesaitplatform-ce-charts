@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "onesait-platform.realtimedb.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "onesait-platform.realtimedb.name" . }}
+    group: {{ .Values.global.groupName }}
+spec:
+  replicas: {{ .Values.global.replicaInitCount }}
+  selector:
+    matchLabels:
+      app: {{ include "onesait-platform.realtimedb.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "onesait-platform.realtimedb.name" . }}
+    spec:
+{{- if .Values.global.setNodesOnDeployments }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                {{- range .Values.global.workerNodes }}
+                - {{ .node }}
+                {{- end }}
+
+{{ end }}
+      containers:
+      - name: {{ include "onesait-platform.realtimedb.name" . }}
+        image: "{{ .Values.realtimedb.image.repository }}:{{ .Values.realtimedb.image.tag }}"
+        imagePullPolicy: {{ .Values.realtimedb.image.pullPolicy }}
+{{- if .Values.global.healthChecksEnabled }}
+        readinessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 100
+          periodSeconds: 5
+          successThreshold: 2
+          tcpSocket:
+            port: {{ .Values.realtimedb.service.targetPort }}
+          timeoutSeconds: 2
+{{- end }}
+        ports:
+        - containerPort: {{ .Values.realtimedb.service.targetPort }}
+          name: 27017tcp270172
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /data/db
+          name: realtimedb-data
+{{- if (not .Values.global.localStorageEnabled) }}
+          subPath: realtimedb
+{{- end }}          
+{{- if .Values.global.limitsEnabled }}
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "1Gi"
+          requests:
+            cpu: "1m"
+            memory: "1Mi"
+{{- end }}
+      dnsPolicy: ClusterFirst
+{{- if .Values.global.sideCarContainersEnabled }}
+      initContainers:
+       - name: volume-mount
+         image: busybox
+         command: ["sh", "-c", "chmod 777 /data/db"]
+         volumeMounts:
+         - name: realtimedb-data
+           mountPath: /data/db
+         resources:
+           limits:
+             cpu: "1"
+             memory: "500Mi"
+           requests:
+             cpu: "1m"
+             memory: "1Mi"
+{{- end }}
+      restartPolicy: Always
+      volumes:
+      - name: realtimedb-data
+        persistentVolumeClaim:
+          claimName: realtimedb-pvc

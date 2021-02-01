@@ -1,0 +1,12 @@
+apiVersion: v2
+name: onesaitplatform-ce-base-chart
+description: Onesait Platform CE Base chart for k8s
+home: https://cicd.onesaitplatform.com/gitlab/onesait-platform/onesaitplatform-helm-chart.git
+type: application
+version: 1.0-ce
+appVersion: 1.0-ce
+maintainers:
+  - name: Onesait Platform
+    email: support@onesaitplatform.com
+    url: lab.onesaitplatform.com
+icon: https://avatars1.githubusercontent.com/u/44359141?s=460&v=4

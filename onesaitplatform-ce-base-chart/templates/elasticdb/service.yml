@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "onesait-platform.elasticdb.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    run: {{ include "onesait-platform.elasticdb.name" . }}
+    k8s-app: {{ include "onesait-platform.elasticdb.name" . }}
+spec:
+  ports:
+  - name: tcp1
+    port: {{ .Values.elasticdb.service.tcp1.port }}
+    protocol: TCP
+    targetPort: {{ .Values.elasticdb.service.tcp1.targetPort }}
+  - name: tcp2
+    port: {{ .Values.elasticdb.service.tcp2.port }}
+    protocol: TCP
+    targetPort: {{ .Values.elasticdb.service.tcp2.targetPort }}
+  selector:
+    app: {{ include "onesait-platform.elasticdb.name" . }}
+  type: {{ .Values.elasticdb.service.type }}
+  sessionAffinity: None

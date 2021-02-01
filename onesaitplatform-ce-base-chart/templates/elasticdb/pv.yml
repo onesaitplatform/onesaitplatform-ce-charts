@@ -1,0 +1,29 @@
+{{- if .Values.global.localStorageEnabled }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: elasticdb-pv-volume
+  namespace: {{ .Release.Namespace }}
+  labels:
+    type: local
+spec:
+  storageClassName: {{ .Values.global.storageClassName }}
+  capacity:
+    storage: {{ .Values.elasticdb.storage.size }}
+{{- if .Values.global.setNodesOnDeployments }}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          {{- range .Values.global.workerNodes }}
+          - {{ .node }}
+          {{- end }}
+{{- end }}
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: {{ .Values.global.localStoragePath }}/onesaitplatform/elasticdb
+{{- end }}
