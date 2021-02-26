@@ -2,11 +2,9 @@
 
 ### Onesait Platform Helm chart
 
-Requirements:
+- Requirements:
 
-Helm v3 installed
-oc cli installed
-OpenSSL installed
+  - Helm v3 installed
 
 ## How to install the Chart
 
