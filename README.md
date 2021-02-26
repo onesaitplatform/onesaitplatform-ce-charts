@@ -2,6 +2,12 @@
 
 ### Onesait Platform Helm chart
 
+Requirements:
+
+Helm v3 installed
+oc cli installed
+OpenSSL installed
+
 ## How to install the Chart
 
 ```
@@ -23,6 +29,8 @@ global:
     serverName: "example.onesaitplatform.com"
     ingressHostName: example.onesaitplatform.com
 ```
+
+- Helm installation command:
 
 ```
 helm install onesaitplatform/onesaitplatform-base-chart \
