@@ -5,6 +5,12 @@ home: https://github.com/onesaitplatform/onesaitplatform-ce-charts
 type: application
 version: 1.0.0-ce
 appVersion: 1.0.0-ce
+keywords:
+  - Minsait
+  - Onesait platform
+  - Kubernetes
+  - IoT
+  - Analytics  
 maintainers:
   - name: Onesait Platform
     email: support@onesaitplatform.com
