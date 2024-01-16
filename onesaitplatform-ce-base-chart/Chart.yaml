@@ -1,12 +1,18 @@
 apiVersion: v2
 name: onesaitplatform-ce-base-chart
 description: Onesait Platform CE Base chart for k8s
-home: https://github.com/onesaitplatform/onesaitplatform-cloud-helmchart.git
+home: https://github.com/onesaitplatform/onesaitplatform-ce-charts
 type: application
 version: 1.0.0-ce
 appVersion: 1.0.0-ce
+keywords:
+  - Minsait
+  - Onesait platform
+  - Kubernetes
+  - IoT
+  - Analytics  
 maintainers:
   - name: Onesait Platform
     email: support@onesaitplatform.com
     url: lab.onesaitplatform.com
-icon: https://avatars1.githubusercontent.com/u/44359141?s=460&v=4
+icon: https://raw.githubusercontent.com/onesaitplatform/onesaitplatform-ce-charts/2.1.0-ce/images/onesaitplatform.png
