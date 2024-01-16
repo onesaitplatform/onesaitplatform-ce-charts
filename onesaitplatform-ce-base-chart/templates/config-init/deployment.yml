@@ -1,4 +1,4 @@
-{{- if .Values.global.deployConfigInit }}
+{{- if and .Values.global.deployConfigInit (not .Values.global.skipPersistenceDeployment) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -35,7 +35,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: kubernetes.io/hostname
+              - key: {{ .Values.global.nodeKey }}
                 operator: In
                 values:
                 {{- range .Values.global.workerNodes }}
@@ -65,6 +65,10 @@ spec:
             secretKeyRef:
               key: CONFIGDBPASS
               name: onesait-secret
+        - name: CONFIGDB_DRIVER
+          value: "{{ .Values.global.env.configDbDriver }}"
+        - name: CONFIGDB_DIALECT
+          value: "{{ .Values.global.env.configDbDialect }}"
         - name: REALTIMEDBUSER
           value: "{{ .Values.global.env.realtimeDbUser }}"
         - name: REALTIMEDBPASS
@@ -78,8 +82,30 @@ spec:
           value: "{{ .Values.global.env.realtimeDbName }}"
         - name: UPDATE_MODE_MULTITENANT
           value: "{{ .Values.configinit.env.multitenantMode }}"
+        - name: RTDB_EXECUTION_TIMEOUT
+          value: "{{ .Values.configinit.env.rtdbExecutionTimeout }}"
+        - name: RTDB_QUERIES_LIMIT
+          value: "{{ .Values.configinit.env.rtdbQueriesLimit }}"
+        - name: MONGO_SOCKET_TIMEOUT
+          value: "{{ .Values.configinit.env.mongoSocketTimeout }}"
+        - name: MONGO_CONNECT_TIMEOUT
+          value: "{{ .Values.configinit.env.mongoConnectTimeout }}"
+        - name: MONGO_WAIT_TIME
+          value: "{{ .Values.configinit.env.mongoWaitTime }}"
+        - name: MONGO_POOL_SIZE
+          value: "{{ .Values.configinit.env.mongoPoolSize }}"
+        - name: MONGO_SSL_ENABLED
+          value: "{{ .Values.configinit.env.mongoSslEnabled }}"
+        - name: MONGO_USE_QUASAR
+          value: "{{ .Values.global.deployQuasar }}"
+        - name: IOTBROKER_SESSION_TIMEOUT
+          value: "{{ .Values.configinit.env.iotBrokerTimeout }}"
+        - name: LOADTESTDATA
+          value: "{{ .Values.configinit.env.loadTestData }}"
         - name: ONESAIT_PROPERTIES
           value: "{{ .Values.configinit.env.onesaitProperties }}"
+        - name: CREATE_DATAFLOW_INSTANCE_VERTICAL
+          value: "{{ .Values.configinit.env.createDataFlowInstanceVertical }}"           
         ports:
         - containerPort: 21000
           name: 21000tcp210002
@@ -88,10 +114,10 @@ spec:
         resources:
           limits:
             cpu: "500m"
-            memory: "2Gi"
+            memory: "1Gi"
           requests:
             cpu: "1m"
-            memory: "1Mi"
+            memory: "128Mi"
 {{- end }}
       dnsPolicy: ClusterFirst
       restartPolicy: Always

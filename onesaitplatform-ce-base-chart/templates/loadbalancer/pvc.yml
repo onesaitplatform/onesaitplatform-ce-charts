@@ -9,7 +9,7 @@ spec:
   - {{ .Values.controlpanel.storage.accessMode }}
 {{- if .Values.global.localStorageEnabled }}
   volumeMode: Filesystem
-  volumeName: loadbalancer-pv-volume
+  volumeName: {{ .Values.persistence.pvs.loadbalancer }}
 {{- end }}
   storageClassName: {{ .Values.global.storageClassName }}
   resources:

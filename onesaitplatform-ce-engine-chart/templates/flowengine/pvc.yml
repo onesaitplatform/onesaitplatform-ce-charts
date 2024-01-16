@@ -1,0 +1,21 @@
+{{- if and (not .Values.global.skipPersistenceDeployment) .Values.deployment.selector.flowengine }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flowengine-pvc
+  namespace: {{ .Release.Namespace }}
+{{- if .Values.global.keepPersistence }}
+{{- template "annotations.keepresources" }}
+{{- end }}
+spec:
+  accessModes:
+  - ReadWriteOnce
+{{- if .Values.global.localStorageEnabled }}
+  volumeMode: Filesystem
+  volumeName: {{ .Values.persistence.pvs.flowengine }}
+{{- end }}
+  storageClassName: {{ .Values.global.storageClassName }}
+  resources:
+    requests:
+      storage: {{ .Values.flowengine.storage.size }}
+{{- end }}

@@ -1,0 +1,19 @@
+{{- if .Values.deployment.selector.semanticinfbroker }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "onesait-platform.semanticinfbroker.name" . }}
+  namespace: {{ .Release.Namespace }}  
+  labels:
+    run: {{ include "onesait-platform.semanticinfbroker.name" . }}
+    k8s-app: {{ include "onesait-platform.semanticinfbroker.name" . }}
+spec:
+  ports:
+  - port: {{ .Values.semanticinfbroker.service.port }}
+    protocol: TCP
+    targetPort: {{ .Values.semanticinfbroker.service.targetPort }}
+  selector:
+    app: {{ include "onesait-platform.semanticinfbroker.name" . }}
+  type: {{ .Values.semanticinfbroker.service.type }}
+  sessionAffinity: None
+{{- end }}

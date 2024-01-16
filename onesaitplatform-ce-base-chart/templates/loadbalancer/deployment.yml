@@ -26,7 +26,7 @@ spec:
                 operator: In
                 values:
                 - {{ include "onesait-platform.loadbalancer.name" . }}
-            topologyKey: "kubernetes.io/hostname"
+            topologyKey: {{ .Values.global.nodeKey }}
 {{ end }}
 {{- if .Values.global.setNodesOnDeployments }}
       affinity:
@@ -34,7 +34,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: kubernetes.io/hostname
+              - key: {{ .Values.global.nodeKey }}
                 operator: In
                 values:
                 {{- range .Values.global.workerNodes }}
@@ -48,18 +48,15 @@ spec:
 {{- if .Values.global.healthChecksEnabled }}
         readinessProbe:
           failureThreshold: 3
-          initialDelaySeconds: 50
+          initialDelaySeconds: 10
           periodSeconds: 5
           successThreshold: 2
           tcpSocket:
-            port: {{ .Values.loadbalancer.service.https.port }}
+            port: {{ .Values.loadbalancer.service.http.port }}
           timeoutSeconds: 2
 {{- end }}
         image: "{{ .Values.loadbalancer.image.repository }}:{{ .Values.loadbalancer.image.tag }}"
         ports:
-        - containerPort: {{ .Values.loadbalancer.service.https.port }}
-          name: 8443tcp84432
-          protocol: TCP
         - containerPort: {{ .Values.loadbalancer.service.http.port }}
           name: 9443tcp94432
           protocol: TCP
@@ -68,9 +65,12 @@ spec:
           readOnly: true
           name: ssl-data
 {{- if .Values.global.webProjectsSharedPvc }}
-        - mountPath: /usr/local/webprojects
+        - mountPath: /opt/bitnami/nginx/webprojects
           readOnly: true
           name: webprojects-data
+{{- if (not .Values.global.localStorageEnabled) }}
+          subPath: controlpanel
+{{- end }}          
 {{- end }}
 {{- if .Values.global.nginxConfPersistenceEnabled }}
         - mountPath: /opt/bitnami/nginx/conf/server_blocks
@@ -89,7 +89,7 @@ spec:
             memory: "250Mi"
           requests:
             cpu: "25m"
-            memory: "50Mi"
+            memory: "128Mi"
 {{- end }}
       dnsPolicy: ClusterFirst
       restartPolicy: Always

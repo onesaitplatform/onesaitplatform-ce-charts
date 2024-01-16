@@ -1,0 +1,123 @@
+{{- if .Values.deployment.selector.apimanager }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "onesait-platform.apimanager.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "onesait-platform.apimanager.name" . }}
+    group: {{ .Values.global.groupName }}
+spec:
+  replicas: {{ .Values.global.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "onesait-platform.apimanager.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "onesait-platform.apimanager.name" . }}
+    spec:
+{{- if .Values.global.setNodesOnDeployments }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: {{ .Values.global.nodeKey }}
+                operator: In
+                values:
+                {{- range .Values.global.workerNodes }}
+                - {{ .node }}
+                {{- end }}
+
+{{ end }}
+{{- if .Values.global.affinityNodeRules }}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - {{ include "onesait-platform.apimanager.name" . }}
+            topologyKey: {{ .Values.global.nodeKey }}
+{{ end }}
+      containers:
+      - name: {{ include "onesait-platform.apimanager.name" . }}
+        image: "{{ .Values.apimanager.image.repository }}:{{ .Values.global.image.tag }}"
+        imagePullPolicy: {{ .Values.apimanager.image.pullPolicy }}
+{{- if .Values.global.healthChecksEnabled }}
+        readinessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 20
+          periodSeconds: 5
+          successThreshold: 2
+          tcpSocket:
+            port: {{ .Values.apimanager.service.targetPort }}
+          timeoutSeconds: 2
+{{- end }}
+        env:
+        - name: HZ_SERVICE_DISCOVERY_STRATEGY
+          value: "{{ .Values.global.env.hzServiceDiscoveryStrategy }}"
+        - name: HZ_ZOOKEEPER_URL
+          value: "{{ .Values.global.env.hzZookeeperUrl }}"
+        - name: SERVER_NAME
+          value: "{{ .Values.global.env.serverName }}"
+        - name: CONFIGDBURL
+          value: "{{ .Values.global.env.configDbUrl }}"
+        - name: CONFIGDBMASTERURL
+          value: "{{ .Values.global.env.configDbMasterUrl }}"
+        - name: CONFIGDBUSER
+          value: "{{ .Values.global.env.configDbUser }}"
+        - name: CONFIGDBPASS
+          valueFrom:
+            secretKeyRef:
+              key: CONFIGDBPASS
+              name: onesait-secret
+        - name: CONFIGDB_DRIVER
+          value: "{{ .Values.global.env.configDbDriver }}"
+        - name: CONFIGDB_DIALECT
+          value: "{{ .Values.global.env.configDbDialect }}"              
+        - name: REALTIMEDBUSER
+          value: "{{ .Values.global.env.realtimeDbUser }}"
+        - name: REALTIMEDBPASS
+          valueFrom:
+            secretKeyRef:
+              key: REALTIMEDBPASS
+              name: onesait-secret
+        - name: ONESAIT_PROPERTIES
+          value: "{{ .Values.apimanager.env.onesaitProperties }}"
+        - name: HTTP_LOG_LEVEL
+          value: "{{ .Values.global.env.httpLogLevel }}"
+        - name: AUDITGLOBALNOTIFY
+          value: "{{ .Values.global.env.auditGlobalNotify }}"
+        - name: ELASTICSEARCH_ENABLED
+          value: "{{ .Values.global.env.elasticEnabled }}"
+        ports:
+        - containerPort: {{ .Values.apimanager.service.targetPort }}
+          name: 19100tcp191002
+          protocol: TCP
+{{- if .Values.global.localStorageEnabled }}
+        volumeMounts:
+        - mountPath: /var/log/platform-logs
+          name: logs
+{{- end }}
+{{- if .Values.global.limitsEnabled }}
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "1.6Gi"
+          requests:
+            cpu: "1m"
+            memory: "1Mi"
+{{- end }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+{{- if .Values.global.localStorageEnabled }}
+      volumes:
+      - name: logs
+        persistentVolumeClaim:
+          claimName: logs-pvc
+{{- end }}
+{{- end }}

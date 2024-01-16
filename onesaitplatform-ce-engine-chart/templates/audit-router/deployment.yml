@@ -1,0 +1,131 @@
+{{- if .Values.deployment.selector.auditrouter }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "onesait-platform.auditrouter.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "onesait-platform.auditrouter.name" . }}
+    group: {{ .Values.global.groupName }}
+spec:
+  replicas: {{ .Values.global.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "onesait-platform.auditrouter.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "onesait-platform.auditrouter.name" . }}
+    spec:
+{{- if .Values.global.affinityNodeRules }}
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - preference:
+              matchExpressions:
+              - key: app
+                operator: NotIn
+                values:
+                - {{ include "onesait-platform.auditrouter.name" . }}
+            weight: 100
+{{ end }}
+{{- if .Values.global.setNodesOnDeployments }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: {{ .Values.global.nodeKey }}
+                operator: In
+                values:
+                {{- range .Values.global.workerNodes }}
+                - {{ .node }}
+                {{- end }}
+
+{{ end }}
+      containers:
+      - name: {{ include "onesait-platform.auditrouter.name" . }}
+        image: "{{ .Values.auditrouter.image.repository }}:{{ .Values.global.image.tag }}"
+        imagePullPolicy: {{ .Values.auditrouter.image.pullPolicy }}
+{{- if .Values.global.healthChecksEnabled }}
+        readinessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 20
+          periodSeconds: 5
+          successThreshold: 2
+          tcpSocket:
+            port: {{ .Values.auditrouter.service.targetPort }}
+          timeoutSeconds: 2
+{{- end }}
+        env:
+        - name: HZ_SERVICE_DISCOVERY_STRATEGY
+          value: "{{ .Values.global.env.hzServiceDiscoveryStrategy }}"
+        - name: HZ_ZOOKEEPER_URL
+          value: "{{ .Values.global.env.hzZookeeperUrl }}"
+        - name: SERVER_NAME
+          value: "auditrouter:20002"
+        - name: CONFIGDBMASTERURL
+          value: "{{ .Values.global.env.configDbMasterUrl }}"
+        - name: CONFIGDBURL
+          value: "{{ .Values.global.env.configDbUrl }}"
+        - name: CONFIGDBUSER
+          value: "{{ .Values.global.env.configDbUser }}"
+        - name: CONFIGDBPASS
+          valueFrom:
+            secretKeyRef:
+              key: CONFIGDBPASS
+              name: onesait-secret
+        - name: CONFIGDB_DRIVER
+          value: "{{ .Values.global.env.configDbDriver }}"
+        - name: CONFIGDB_DIALECT
+          value: "{{ .Values.global.env.configDbDialect }}"              
+        - name: REALTIMEDBUSER
+          value: "{{ .Values.global.env.realtimeDbUser }}"
+        - name: REALTIMEDBPASS
+          valueFrom:
+            secretKeyRef:
+              key: REALTIMEDBPASS
+              name: onesait-secret
+        - name: NOTIFICATION_SUBSCRIPTION_ATTEMPS
+          value: "{{ .Values.auditrouter.env.notificationSubscriptionAttemps }}"
+        - name: NOTIFICATION_POOL_SUBSCRIPTION_NOTIFICATOR
+          value: "{{ .Values.auditrouter.env.notificationPoolSubscriptionNotificator }}"
+        - name: NOTIFICATION_POOL_SUBSCRIPTION
+          value: "{{ .Values.auditrouter.env.notificationPoolSubscription }}"
+        - name: ONESAIT_PROPERTIES
+          value: {{ .Values.auditrouter.env.onesaitProperties | toJson }}
+        - name: OP_LOG_LEVEL
+          value: "{{ .Values.auditrouter.env.opLogLevel }}"
+        - name: HTTP_LOG_LEVEL
+          value: "{{ .Values.global.env.httpLogLevel }}"
+        - name: JAVA_OPTS
+          value: "{{ .Values.auditrouter.env.javaOpts }}"
+        - name: ELASTICSEARCH_ENABLED
+          value: "{{ .Values.global.env.elasticEnabled }}"
+        ports:
+        - containerPort: {{ .Values.auditrouter.service.targetPort }}
+          name: 20002tcp200022
+          protocol: TCP
+{{- if .Values.global.localStorageEnabled }}
+        volumeMounts:
+        - mountPath: /var/log/platform-logs
+          name: logs
+{{- end }}
+{{- if .Values.global.limitsEnabled }}
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "1.5Gi"
+          requests:
+            cpu: "1m"
+            memory: "1Mi"
+{{- end }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+{{- if .Values.global.localStorageEnabled }}
+      volumes:
+      - name: logs
+        persistentVolumeClaim:
+          claimName: logs-pvc
+{{- end }}
+{{- end }}

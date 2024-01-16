@@ -1,21 +1,21 @@
-{{- if .Values.global.deploySchedulerDb }}
+{{- if and (not .Values.global.externalDatabase) (eq .Values.global.configDbType "mariadb") }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "onesait-platform.schedulerdb.name" . }}
+  name: {{ include "onesait-platform.configdb.name" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    app: {{ include "onesait-platform.schedulerdb.name" . }}
+    app: {{ include "onesait-platform.configdb.name" . }}
     group: {{ .Values.global.groupName }}
 spec:
   replicas: {{ .Values.global.replicaInitCount }}
   selector:
     matchLabels:
-      app: {{ include "onesait-platform.schedulerdb.name" . }}
+      app: {{ include "onesait-platform.configdb.name" . }}
   template:
     metadata:
       labels:
-        app: {{ include "onesait-platform.schedulerdb.name" . }}
+        app: {{ include "onesait-platform.configdb.name" . }}
     spec:
 {{- if .Values.global.setNodesOnDeployments }}
       affinity:
@@ -23,7 +23,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: kubernetes.io/hostname
+              - key: {{ .Values.global.nodeKey }}
                 operator: In
                 values:
                 {{- range .Values.global.workerNodes }}
@@ -31,38 +31,43 @@ spec:
                 {{- end }}
 
 {{ end }}
+
       containers:
-      - name: {{ include "onesait-platform.schedulerdb.name" . }}
-        image: "{{ .Values.schedulerdb.image.repository }}:{{ .Values.schedulerdb.image.tag }}"
-        imagePullPolicy: {{ .Values.schedulerdb.image.pullPolicy }}
+      - name: {{ include "onesait-platform.configdb.name" . }}
+        image: "{{ .Values.configdb.image.repository }}:{{ .Values.configdb.image.tag }}"
+        imagePullPolicy: {{ .Values.configdb.image.pullPolicy }}
 {{- if .Values.global.healthChecksEnabled }}
         readinessProbe:
           failureThreshold: 3
-          initialDelaySeconds: 100
+          initialDelaySeconds: 15
           periodSeconds: 5
           successThreshold: 2
           tcpSocket:
-            port: {{ .Values.schedulerdb.service.targetPort }}
+            port: {{ .Values.configdb.service.targetPort }}
           timeoutSeconds: 2
 {{- end }}
         ports:
-        - containerPort: {{ .Values.schedulerdb.service.targetPort }}
+        - containerPort: {{ .Values.configdb.service.targetPort }}
           name: 3306tcp33062
           protocol: TCP
         volumeMounts:
         - mountPath: /var/lib/mysql
-          name: schedulerdb-data
+          name: configdb-data
 {{- if (not .Values.global.localStorageEnabled) }}
-          subPath: schedulerdb
+          subPath: configdb
 {{- end }}
+        - mountPath: /etc/mysql/conf.d/config-file.cnf
+          readOnly: false
+          name: custom-config
+          subPath: config-file.cnf        
 {{- if .Values.global.limitsEnabled }}
         resources:
           limits:
             cpu: "500m"
-            memory: "500Mi"
+            memory: "800Mi"
           requests:
             cpu: "1m"
-            memory: "1Mi"
+            memory: "128Mi"
 {{- end }}
       dnsPolicy: ClusterFirst
 {{- if .Values.global.sideCarContainersEnabled }}
@@ -71,7 +76,7 @@ spec:
          image: busybox
          command: ["sh", "-c", "chmod 777 /var/lib/mysql"]
          volumeMounts:
-         - name: schedulerdb-data
+         - name: configdb-data
            mountPath: /var/lib/mysql
          resources:
            limits:
@@ -83,7 +88,10 @@ spec:
 {{- end }}
       restartPolicy: Always
       volumes:
-      - name: schedulerdb-data
+      - name: configdb-data
         persistentVolumeClaim:
-          claimName: schedulerdb-pvc
-{{- end }}
+          claimName: configdb-pvc
+      - name: custom-config
+        configMap:
+          name: custom-config-db          
+{{ end }}

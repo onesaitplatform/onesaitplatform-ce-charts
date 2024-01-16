@@ -26,7 +26,7 @@ spec:
                 operator: In
                 values:
                 - {{ include "onesait-platform.monitoringui.name" . }}
-            topologyKey: "kubernetes.io/hostname"
+            topologyKey: {{ .Values.global.nodeKey }}
 {{ end }}
 {{- if .Values.global.setNodesOnDeployments }}
       affinity:
@@ -34,7 +34,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: kubernetes.io/hostname
+              - key: {{ .Values.global.nodeKey }}
                 operator: In
                 values:
                 {{- range .Values.global.workerNodes }}
@@ -49,7 +49,7 @@ spec:
 {{- if .Values.global.healthChecksEnabled }}
         readinessProbe:
           failureThreshold: 3
-          initialDelaySeconds: 100
+          initialDelaySeconds: 30
           periodSeconds: 5
           successThreshold: 2
           tcpSocket:
@@ -66,13 +66,25 @@ spec:
         - name: CONFIGDBUSER
           value: "{{ .Values.global.env.configDbUser }}"
         - name: CONFIGDBPASS
-          value: "{{ .Values.global.env.configDbPass }}"
+          valueFrom:
+            secretKeyRef:
+              key: CONFIGDBPASS
+              name: onesait-secret
+        - name: CONFIGDB_DRIVER
+          value: "{{ .Values.global.env.configDbDriver }}"
+        - name: CONFIGDB_DIALECT
+          value: "{{ .Values.global.env.configDbDialect }}"             
         - name: REALTIMEDBUSER
           value: "{{ .Values.global.env.realtimeDbUser }}"
         - name: REALTIMEDBPASS
-          value: "{{ .Values.global.env.realtimeDbPass }}"
+          valueFrom:
+            secretKeyRef:
+              key: REALTIMEDBPASS
+              name: onesait-secret
         - name: ONESAIT_PROPERTIES
           value: "{{ .Values.monitoringui.env.onesaitProperties }}"
+        - name: HZ_SERVICE_DISCOVERY_STRATEGY
+          value: "{{ .Values.global.env.hzServiceDiscoveryStrategy }}"          
         ports:
         - containerPort: {{ .Values.monitoringui.service.targetPort }}
           name: 18100tcp18100

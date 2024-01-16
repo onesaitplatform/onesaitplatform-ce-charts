@@ -1,0 +1,114 @@
+# Global Variables
+global:
+  groupName: onesait-platform
+  replicaCount: 1
+  limitsEnabled: true
+  keepPersistence: true
+  skipPersistenceDeployment: false
+  localStorageEnabled: false
+  localStoragePath: /datadrive
+  healthChecksEnabled: true
+  sideCarContainersEnabled: false
+  storageClassName: managed-premium
+  storageClassProvisioned: false
+  logStorageClassName: Azurefile
+  logStoragesize: 20Gi
+  storageClassOnPvcsEnabled: false
+  twoStreamsetsEnabled: false
+  threeStreamsetsEnabled: false
+  streamsetsSdcSecurityContext: false
+  affinityNodeRules: false
+  nodeKey: kubernetes.io/hostname
+  setNodesOnDeployments: false
+  workerNodes:
+    - node: worker
+    - node: worker2
+  image:
+    tag: 5.2.0-ce
+  env:
+    serverName: "localhost"
+    configDbMasterUrl: "jdbc:mysql://configdb:3306/onesaitplatform_master_config?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&useSSL=false&autoReconnect=true"
+    configDbUrl: "jdbc:mysql://configdb:3306/onesaitplatform_config?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&useSSL=true&autoReconnect=true&nullDatabaseMeansCurrent=true"
+    configDbUser: "root"
+    configDbPass: "changeIt!"
+    configDbDriver: "com.mysql.cj.jdbc.Driver"
+    configDbDialect: "org.hibernate.dialect.MySQL5InnoDBDialect"
+    realtimeDbUser: "platformadmin"
+    realtimeDbPass: "0pen-platf0rm-2018!"
+    realtimeDbWriteConcern: "UNACKNOWLEDGED"
+    realtimeDbServers: "realtimedb:27017"
+    realtimeDbName: "onesaitplatform_rtdb"
+    kafkaEnabled: "false"
+    kafkaHost: kafkaservice
+    hzServiceDiscoveryStrategy: zookeeper
+    hzZookeeperUrl: zookeeper:2181
+    httpLogLevel: "INFO"
+    
+deployment:
+  selector:
+    dashboard: true
+    notebook: true
+    streamsets: true
+
+persistence:
+    pvs:
+      notebooksconf: notebook-pv-volume-conf
+      notebooksdata: notebook-pv-volume-data
+      notebookswks: notebook-pv-volume-wks
+      dataflowdata: streamsets-pv-volume-data
+      dataflowlibs: streamsets-pv-volume-libs
+      dataflowlibsextras: streamsets-pv-volume-libs-extra
+
+# Variables for dataflow deployment/service/storage
+streamsets:
+  nameOverride: streamsets
+  version: 3.18.1
+  image:
+    repository: onesaitplatform/streamsets
+    tag:  4.0.0-318
+# Streamset version for Platform >= 3.0.0-jailbreak
+#   tag:  3.1.0-318
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 18630
+    targetPort: 18630
+  env:
+    opStreamsetsPoolSize: "50"
+    opStreamsetsSamplingPopulationSize: "50"
+    opStreamsetsSamplingSampleSize: "1"
+    opStreamsetsXms: "2048m"
+    opStreamsetsXmx: "2048m"
+    sdcJavaOpts: "-Dname=Streamsets-310-1 -Xmn1g -XX:-TieredCompilation -XX:ReservedCodeCacheSize=240m -XX:SurvivorRatio=8 -XX:-UseAdaptiveSizePolicy"
+  storage:
+    dataSize: 10Gi
+    libsSize: 10Gi
+
+# Variables for dashboard deployment/service
+dashboard:
+  nameOverride: dashboardengineservice
+  image:
+    repository: onesaitplatform/dashboard
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 18300
+    targetPort: 18300
+  env:
+    onesaitProperties:
+
+# Variables for notebooks deployment/service/storage
+notebook:
+  nameOverride: zeppelin
+  image:
+    repository: onesaitplatform/notebook
+    tag: 0.10.1-py3-R-op.5.0.0-sso-lite-v2
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8080
+    targetPort: 8080
+  storage:
+    dataSize: 10Gi
+    confSize: 10Gi
+    wksSize: 20Gi

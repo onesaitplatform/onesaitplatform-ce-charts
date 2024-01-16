@@ -1,0 +1,19 @@
+{{- if .Values.deployment.selector.iotbroker }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "onesait-platform.iotbroker.name" . }}
+  namespace: {{ .Release.Namespace }}  
+  labels:
+    run: {{ include "onesait-platform.iotbroker.name" . }}
+    k8s-app: {{ include "onesait-platform.iotbroker.name" . }}
+spec:
+  ports:
+  - port: {{ .Values.iotbroker.service.port }}
+    protocol: TCP
+    targetPort: {{ .Values.iotbroker.service.targetPort }}
+  selector:
+    app: {{ include "onesait-platform.iotbroker.name" . }}
+  type: {{ .Values.iotbroker.service.type }}
+  sessionAffinity: None
+{{- end }}

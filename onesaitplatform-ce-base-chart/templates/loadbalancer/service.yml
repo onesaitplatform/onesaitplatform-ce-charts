@@ -1,3 +1,4 @@
+{{- if ne .Values.global.cloudProvider "aws" }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -15,14 +16,16 @@ spec:
   externalTrafficPolicy: Cluster
 {{- end }}
   ports:
-  - name: https
-    port: {{ .Values.loadbalancer.service.https.port }}
-    protocol: TCP
-    targetPort: {{ .Values.loadbalancer.service.https.targetPort }}
   - name: http
     port: {{ .Values.loadbalancer.service.http.port }}
     protocol: TCP
     targetPort: {{ .Values.loadbalancer.service.http.targetPort }}
+{{- if .Values.global.flowengineHA }}
+  - name: flowengine
+    port: {{ .Values.loadbalancer.service.flowengine.port }}
+    protocol: TCP
+    targetPort: {{ .Values.loadbalancer.service.flowengine.targetPort }}
+{{- end }}
   selector:
     app: {{ include "onesait-platform.loadbalancer.name" . }}
   type: {{ .Values.loadbalancer.service.type }}
@@ -33,3 +36,4 @@ spec:
   sessionAffinityConfig:
     clientIP:
       timeoutSeconds: 10800
+{{- end }}

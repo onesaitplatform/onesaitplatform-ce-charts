@@ -1,3 +1,4 @@
+{{- if .Values.global.env.elasticEnabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -7,7 +8,7 @@ metadata:
     app: {{ include "onesait-platform.elasticdb.name" . }}
     group: {{ .Values.global.groupName }}
 spec:
-  replicas: {{ .Values.global.replicaCount }}
+  replicas: {{ .Values.global.replicaInitCount }}
   selector:
     matchLabels:
       app: {{ include "onesait-platform.elasticdb.name" . }}
@@ -22,7 +23,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: kubernetes.io/hostname
+              - key: {{ .Values.global.nodeKey }}
                 operator: In
                 values:
                 {{- range .Values.global.workerNodes }}
@@ -38,7 +39,7 @@ spec:
 {{- if .Values.global.healthChecksEnabled }}
         readinessProbe:
           failureThreshold: 3
-          initialDelaySeconds: 100
+          initialDelaySeconds: 20
           periodSeconds: 5
           successThreshold: 2
           tcpSocket:
@@ -57,7 +58,7 @@ spec:
           name: elasticdb-data
 {{- if (not .Values.global.localStorageEnabled) }}
           subPath: elasticdb
-{{- end }}          
+{{- end }}
 {{- if .Values.global.limitsEnabled }}
         resources:
           limits:
@@ -82,10 +83,11 @@ spec:
              memory: "500Mi"
            requests:
              cpu: "1m"
-             memory: "1Mi"
+             memory: "128Mi"
 {{- end }}
       restartPolicy: Always
       volumes:
       - name: elasticdb-data
         persistentVolumeClaim:
           claimName: elasticdb-pvc
+{{- end }}

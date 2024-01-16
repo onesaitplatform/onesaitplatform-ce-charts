@@ -1,0 +1,19 @@
+{{- if .Values.deployment.selector.auditrouter }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "onesait-platform.auditrouter.name" . }}
+  namespace: {{ .Release.Namespace }}  
+  labels:
+    run: {{ include "onesait-platform.auditrouter.name" . }}
+    k8s-app: {{ include "onesait-platform.auditrouter.name" . }}
+spec:
+  ports:
+  - port: {{ .Values.auditrouter.service.port }}
+    protocol: TCP
+    targetPort: {{ .Values.auditrouter.service.targetPort }}
+  selector:
+    app: {{ include "onesait-platform.auditrouter.name" . }}
+  type: {{ .Values.auditrouter.service.type }}
+  sessionAffinity: None
+{{- end }}

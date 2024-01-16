@@ -1,0 +1,23 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: custom-config-db
+  namespace: {{ .Release.Namespace }}
+data:
+  config-file.cnf: |-
+    [mysqld]
+    lower_case_table_names    = 1
+    max_allowed_packet        = 536870912
+    max_connections           = 351
+    character-set-server      = utf8mb4
+    collation-server          = utf8mb4_unicode_ci
+    init-connect              = 'SET NAMES utf8mb4'
+
+    [client]
+    default-character-set= utf8mb4
+
+    [mysql]
+    default-character-set= utf8mb4
+
+    [mysqldump]
+    max_allowed_packet        = 536870912

@@ -1,3 +1,4 @@
+{{- if .Values.global.env.kafkaEnabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -7,7 +8,7 @@ metadata:
     app: {{ include "onesait-platform.kafka.name" . }}
     group: {{ .Values.global.groupName }}
 spec:
-  replicas: {{ .Values.global.replicaCount }}
+  replicas: {{ .Values.global.replicaInitCount }}
   selector:
     matchLabels:
       app: {{ include "onesait-platform.kafka.name" . }}
@@ -34,7 +35,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: kubernetes.io/hostname
+              - key: {{ .Values.global.nodeKey }}
                 operator: In
                 values:
                 {{- range .Values.global.workerNodes }}
@@ -49,7 +50,7 @@ spec:
 {{- if .Values.global.healthChecksEnabled }}
         readinessProbe:
           failureThreshold: 3
-          initialDelaySeconds: 100
+          initialDelaySeconds: 20
           periodSeconds: 5
           successThreshold: 2
           tcpSocket:
@@ -63,12 +64,18 @@ spec:
           value: "{{ .Values.kafka.env.kafkaOffsetTopicReplFactor }}"
         - name: KAFKA_ZOOKEEPER_CONNECT
           value: "{{ .Values.kafka.env.kafkaZookeeperConnect }}"
+        - name: KAFKA_LOG_DIRS
+          value: "{{ .Values.kafka.env.kafkaLogDirs }}"
         - name: SERVER_NAME
           value: "{{ .Values.kafka.env.serverName }}"
         - name: KAFKA_ADVERTISED_LISTENERS
           value: "{{ .Values.kafka.env.kafkaAdvertisedListeners }}"
         - name: KAFKA_SUPER_USERS
           value: "{{ .Values.kafka.env.kafkaSuperUsers }}"
+{{- if .Values.global.kafkaAuthUrl }}
+        - name: AUTHENTICATION_URL
+          value: "{{ .Values.kafka.env.authUrl }}"
+{{- end }}
         ports:
         - containerPort: {{ .Values.kafka.service.tcp.targetPort }}
           name: 9092tcp9092
@@ -82,6 +89,11 @@ spec:
 {{- if (not .Values.global.localStorageEnabled) }}
           subPath: kafka
 {{- end }}
+        - mountPath: /var/log/platform-logs
+          name: kafka-logs
+{{- if (not .Values.global.localStorageEnabled) }}
+          subPath: kafkalogs
+{{- end }}
 {{- if .Values.global.limitsEnabled }}
         resources:
           limits:
@@ -92,8 +104,41 @@ spec:
             memory: "1Mi"
 {{- end }}
       dnsPolicy: ClusterFirst
+{{- if .Values.global.sideCarContainersEnabled }}
+      initContainers:
+       - name: volume-mount-data
+         image: busybox
+         command: ["sh", "-c", "chmod 777 /var/lib/kafka/data && chown -R 1000:1000 /var/lib/kafka/data"]
+         volumeMounts:
+         - name: kafka-data
+           mountPath: /var/lib/kafka/data
+         resources:
+           limits:
+             cpu: "1"
+             memory: "500Mi"
+           requests:
+             cpu: "1m"
+             memory: "128Mi"
+       - name: volume-mount-logs
+         image: busybox
+         command: ["sh", "-c", "chmod 777 /var/log/platform-logs && chown -R 1000:1000 /var/log/platform-logs"]
+         volumeMounts:
+         - name: kafka-logs
+           mountPath: /var/log/platform-logs
+         resources:
+           limits:
+             cpu: "1"
+             memory: "500Mi"
+           requests:
+             cpu: "1m"
+             memory: "128Mi"             
+{{- end }}
       restartPolicy: Always
       volumes:
       - name: kafka-data
         persistentVolumeClaim:
           claimName: kafka-pvc
+      - name: kafka-logs
+        persistentVolumeClaim:
+          claimName: kafka-logs-pvc
+{{- end }}

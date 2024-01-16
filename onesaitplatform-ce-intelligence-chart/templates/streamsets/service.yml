@@ -1,0 +1,19 @@
+{{- if .Values.deployment.selector.streamsets }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "onesait-platform.streamsets.name" . }}
+  namespace: {{ .Release.Namespace }}  
+  labels:
+    run: {{ include "onesait-platform.streamsets.name" . }}
+    k8s-app: {{ include "onesait-platform.streamsets.name" . }}
+spec:
+  ports:
+  - port: {{ .Values.streamsets.service.port }}
+    protocol: TCP
+    targetPort: {{ .Values.streamsets.service.targetPort }}
+  selector:
+    subapp: {{ include "onesait-platform.streamsets.name" . }}
+  type: {{ .Values.streamsets.service.type }}
+  sessionAffinity: None
+{{- end }}

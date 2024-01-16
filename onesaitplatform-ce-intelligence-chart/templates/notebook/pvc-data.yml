@@ -1,0 +1,21 @@
+{{- if and .Values.deployment.selector.notebook (not .Values.global.skipPersistenceDeployment) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: notebook-pvc-data
+  namespace: {{ .Release.Namespace }}
+{{- if .Values.global.keepPersistence }}
+{{- template "annotations.keepresources" }}
+{{- end }}
+spec:
+  accessModes:
+  - ReadWriteOnce
+{{- if .Values.global.localStorageEnabled }}
+  volumeMode: Filesystem
+  volumeName: {{ .Values.persistence.pvs.notebooksdata }}
+{{- end }}
+  storageClassName: {{ .Values.global.storageClassName }}
+  resources:
+    requests:
+      storage: {{ .Values.notebook.storage.dataSize }}
+{{- end }}

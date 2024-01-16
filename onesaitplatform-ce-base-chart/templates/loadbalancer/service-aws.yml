@@ -1,0 +1,29 @@
+{{- if eq .Values.global.cloudProvider "aws" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "onesait-platform.loadbalancer.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    run: {{ include "onesait-platform.loadbalancer.name" . }}
+    k8s-app: {{ include "onesait-platform.loadbalancer.name" . }}
+spec:
+  ports:
+  - name: http
+    port: {{ .Values.loadbalancer.service.http.port }}
+    protocol: TCP
+    targetPort: {{ .Values.loadbalancer.service.http.targetPort }}
+{{- if .Values.global.flowengineHA }}
+  - name: flowengine
+    port: {{ .Values.loadbalancer.service.flowengine.port }}
+    protocol: TCP
+    targetPort: {{ .Values.loadbalancer.service.flowengine.targetPort }}
+{{- end }}
+  selector:
+    app: {{ include "onesait-platform.loadbalancer.name" . }}
+  type: NodePort
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+{{- end }}

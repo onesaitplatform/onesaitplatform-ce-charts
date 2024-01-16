@@ -1,0 +1,19 @@
+{{- if .Values.deployment.selector.notebook }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "onesait-platform.notebook.name" . }}
+  namespace: {{ .Release.Namespace }}  
+  labels:
+    run: {{ include "onesait-platform.notebook.name" . }}
+    k8s-app: {{ include "onesait-platform.notebook.name" . }}
+spec:
+  ports:
+  - port: {{ .Values.notebook.service.port }}
+    protocol: TCP
+    targetPort: {{ .Values.notebook.service.targetPort }}
+  selector:
+    app: {{ include "onesait-platform.notebook.name" . }}
+  type: {{ .Values.notebook.service.type }}
+  sessionAffinity: None
+{{- end }}

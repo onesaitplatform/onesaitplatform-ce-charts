@@ -1,0 +1,154 @@
+{{- if .Values.deployment.selector.streamsets }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "onesait-platform.streamsets.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "onesait-platform.streamsets.name" . }}
+    subapp: {{ include "onesait-platform.streamsets.name" . }}
+    group: {{ .Values.global.groupName }}
+spec:
+  replicas: {{ .Values.global.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "onesait-platform.streamsets.name" . }}
+      subapp: {{ include "onesait-platform.streamsets.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "onesait-platform.streamsets.name" . }}
+        subapp: {{ include "onesait-platform.streamsets.name" . }}
+    spec:
+{{- if .Values.global.affinityNodeRules }}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - {{ include "onesait-platform.streamsets.name" . }}
+            topologyKey: {{ .Values.global.nodeKey }}
+{{ end }}
+{{- if .Values.global.setNodesOnDeployments }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: {{ .Values.global.nodeKey }}
+                operator: In
+                values:
+                {{- range .Values.global.workerNodes }}
+                - {{ .node }}
+                {{- end }}
+
+{{ end }}
+      containers:
+      - name: {{ include "onesait-platform.streamsets.name" . }}
+        image: "{{ .Values.streamsets.image.repository }}:{{ .Values.streamsets.image.tag }}"
+        imagePullPolicy: {{ .Values.streamsets.image.pullPolicy }}
+{{- if .Values.global.healthChecksEnabled }}
+        readinessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 30
+          periodSeconds: 5
+          successThreshold: 2
+          tcpSocket:
+            port: {{ .Values.streamsets.service.targetPort }}
+          timeoutSeconds: 2
+{{- end }}
+        env:
+        - name: OP_STREAMSETS_POOL_SIZE
+          value: "{{ .Values.streamsets.env.opStreamsetsPoolSize }}"
+        - name: OP_STREAMSETS_SAMPLING_POPULATION_SIZE
+          value: "{{ .Values.streamsets.env.opStreamsetsSamplingPopulationSize }}"
+        - name: OP_STREAMSETS_SAMPLING_SAMPLE_SIZE
+          value: "{{ .Values.streamsets.env.opStreamsetsSamplingSampleSize }}"
+        - name: OP_STREAMSETS_XMS
+          value: "{{ .Values.streamsets.env.opStreamsetsXms }}"
+        - name: OP_STREAMSETS_XMX
+          value: "{{ .Values.streamsets.env.opStreamsetsXmx }}"
+        - name: SDC_JAVA_OPTS
+          value: "{{ .Values.streamsets.env.sdcJavaOpts }}"
+        ports:
+        - containerPort: {{ .Values.streamsets.service.targetPort }}
+          name: 18630tcp18630
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /data
+          name: streamsets-data
+        - mountPath: /opt/streamsets-datacollector-{{ .Values.streamsets.version }}/streamsets-libs
+          name: streamsets-libs
+        - mountPath: /opt/streamsets-datacollector-{{ .Values.streamsets.version }}/streamsets-libs-extras
+          name: streamsets-libs-extra
+{{- if .Values.global.limitsEnabled }}
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "2Gi"
+          requests:
+            cpu: "1m"
+            memory: "1Mi"
+{{- end }}
+      dnsPolicy: ClusterFirst
+{{- if .Values.global.sideCarContainersEnabled }}
+      initContainers:
+       - name: volume-mount-data
+         image: busybox
+         command: ["sh", "-c", "chmod 777 /data"]
+         volumeMounts:
+         - name: streamsets-data
+           mountPath: /data
+         resources:
+           limits:
+             cpu: "1"
+             memory: "500Mi"
+           requests:
+             cpu: "1m"
+             memory: "1Mi"
+       - name: volume-mount-libs
+         image: busybox
+         command: ["sh", "-c", "chmod 777 /opt/streamsets-datacollector-3.18.1/streamsets-libs && rm -rf /opt/streamsets-datacollector-3.18.1/streamsets-libs/lost+found"]
+         volumeMounts:
+         - name: streamsets-libs
+           mountPath: /opt/streamsets-datacollector-{{ .Values.streamsets.version }}/streamsets-libs
+         resources:
+           limits:
+             cpu: "1"
+             memory: "500Mi"
+           requests:
+             cpu: "1m"
+             memory: "1Mi"
+       - name: volume-mount-libs-extras
+         image: busybox
+         command: ["sh", "-c", "chmod 777 /opt/streamsets-datacollector-3.18.1/streamsets-libs-extras && rm -rf /opt/streamsets-datacollector-3.18.1/streamsets-libs-extras/lost+found"]
+         volumeMounts:
+         - name: streamsets-libs-extra
+           mountPath: /opt/streamsets-datacollector-{{ .Values.streamsets.version }}/streamsets-libs-extras
+         resources:
+           limits:
+             cpu: "1"
+             memory: "500Mi"
+           requests:
+             cpu: "1m"
+             memory: "1Mi"
+{{- end }}
+      restartPolicy: Always
+{{- if .Values.global.streamsetsSdcSecurityContext }}
+      securityContext:
+        fsGroup: 20159
+{{ end }}
+      volumes:
+      - name: streamsets-data
+        persistentVolumeClaim:
+          claimName: streamsets-pvc-data
+      - name: streamsets-libs
+        persistentVolumeClaim:
+          claimName: streamsets-pvc-libs
+      - name: streamsets-libs-extra
+        persistentVolumeClaim:
+          claimName: streamsets-pvc-libs-extra
+{{- end }}

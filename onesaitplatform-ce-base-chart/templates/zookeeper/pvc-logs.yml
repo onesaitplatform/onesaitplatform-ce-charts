@@ -1,0 +1,21 @@
+{{- if (not .Values.global.skipPersistenceDeployment) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: zookeeperlogs-pvc
+  namespace: {{ .Release.Namespace }}
+{{- if .Values.global.keepPersistence }}
+{{- template "annotations.keepresources" }}
+{{- end }}    
+spec:
+  accessModes:
+  - ReadWriteOnce
+{{- if .Values.global.localStorageEnabled }}
+  volumeMode: Filesystem
+  volumeName: {{ .Values.persistence.pvs.zookeeperlogs }}
+{{- end }}
+  storageClassName: {{ .Values.global.storageClassName }}
+  resources:
+    requests:
+      storage: {{ .Values.zookeeper.storage.logsSize }}
+{{- end }}

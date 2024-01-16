@@ -1,0 +1,29 @@
+{{- if eq .Values.global.cloudProvider "aws" }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "onesait-platform.ingress.name" . }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/target-type: instance
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/certificate-arn: {{ .Values.global.certificateAwsArn }}
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS": 443}]'
+spec:
+  tls:
+  - hosts:
+    - {{ .Values.global.env.ingressHostName }}
+    secretName: loadbalancersecret
+  rules:
+  - host: {{ .Values.global.env.ingressHostName }}
+    http:
+      paths:
+      - path: /*
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ include "onesait-platform.loadbalancer.name" . }}
+            port:
+              number: {{ .Values.loadbalancer.service.http.port }}
+{{- end }}

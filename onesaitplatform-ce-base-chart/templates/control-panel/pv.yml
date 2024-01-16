@@ -1,11 +1,14 @@
-{{- if .Values.global.localStorageEnabled }}
+{{- if and .Values.global.localStorageEnabled (not .Values.global.skipPersistenceDeployment) }}
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: controlpanel-pv-volume
+  name: {{ .Values.persistence.pvs.controlpanel }}
   namespace: {{ .Release.Namespace }}
   labels:
     type: local
+{{- if .Values.global.keepPersistence }}
+{{- template "annotations.keepresources" }}
+{{- end }}  
 spec:
   storageClassName: {{ .Values.global.storageClassName }}
   capacity:
@@ -15,7 +18,7 @@ spec:
     required:
       nodeSelectorTerms:
       - matchExpressions:
-        - key: kubernetes.io/hostname
+        - key: {{ .Values.global.nodeKey }}
           operator: In
           values:
           {{- range .Values.global.workerNodes }}
@@ -27,7 +30,7 @@ spec:
     - ReadWriteMany
 {{- else }}
     - ReadWriteOnce
-{{- end }}    
+{{- end }}
   hostPath:
     path: {{ .Values.global.localStoragePath }}/onesaitplatform/webprojects
 {{- end }}

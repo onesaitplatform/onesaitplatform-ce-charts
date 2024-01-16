@@ -1,16 +1,21 @@
+{{- if and (not .Values.global.externalDatabase) (not .Values.global.skipPersistenceDeployment) }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: realtimedb-pvc
   namespace: {{ .Release.Namespace }}
+{{- if .Values.global.keepPersistence }}
+{{- template "annotations.keepresources" }}
+{{- end }}
 spec:
   accessModes:
   - ReadWriteOnce
 {{- if .Values.global.localStorageEnabled }}
   volumeMode: Filesystem
-  volumeName: realtimedb-pv-volume
+  volumeName: {{ .Values.persistence.pvs.realtimedb }}
 {{- end }}
   storageClassName: {{ .Values.global.storageClassName }}
   resources:
     requests:
       storage: {{ .Values.realtimedb.storage.size }}
+{{ end }}

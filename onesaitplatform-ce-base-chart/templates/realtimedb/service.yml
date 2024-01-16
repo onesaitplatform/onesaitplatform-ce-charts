@@ -1,8 +1,9 @@
+{{- if (not .Values.global.externalDatabase) }}
 apiVersion: v1
 kind: Service
 metadata:
   name: {{ include "onesait-platform.realtimedb.name" . }}
-  namespace: {{ .Release.Namespace }}  
+  namespace: {{ .Release.Namespace }}
   labels:
     run: {{ include "onesait-platform.realtimedb.name" . }}
     k8s-app: {{ include "onesait-platform.realtimedb.name" . }}
@@ -15,3 +16,4 @@ spec:
     app: {{ include "onesait-platform.realtimedb.name" . }}
   type: {{ .Values.realtimedb.service.type }}
   sessionAffinity: None
+{{ end }}

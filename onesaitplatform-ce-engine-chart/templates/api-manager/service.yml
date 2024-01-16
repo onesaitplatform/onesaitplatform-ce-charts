@@ -1,0 +1,19 @@
+{{- if .Values.deployment.selector.apimanager }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "onesait-platform.apimanager.name" . }}
+  namespace: {{ .Release.Namespace }}  
+  labels:
+    run: {{ include "onesait-platform.apimanager.name" . }}
+    k8s-app: {{ include "onesait-platform.apimanager.name" . }}
+spec:
+  ports:
+  - port: {{ .Values.apimanager.service.port }}
+    protocol: TCP
+    targetPort: {{ .Values.apimanager.service.targetPort }}
+  selector:
+    app: {{ include "onesait-platform.apimanager.name" . }}
+  type: {{ .Values.apimanager.service.type }}
+  sessionAffinity: None
+{{- end }}

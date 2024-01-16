@@ -1,3 +1,4 @@
+{{- if (not .Values.global.externalDatabase) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -22,7 +23,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: kubernetes.io/hostname
+              - key: {{ .Values.global.nodeKey }}
                 operator: In
                 values:
                 {{- range .Values.global.workerNodes }}
@@ -37,13 +38,17 @@ spec:
 {{- if .Values.global.healthChecksEnabled }}
         readinessProbe:
           failureThreshold: 3
-          initialDelaySeconds: 100
+          initialDelaySeconds: 20
           periodSeconds: 5
           successThreshold: 2
           tcpSocket:
             port: {{ .Values.realtimedb.service.targetPort }}
           timeoutSeconds: 2
 {{- end }}
+{{- if .Values.realtimedb.customWiredTiger }}
+        command: ["docker-entrypoint.sh"]
+        args: ["mongod", "--wiredTigerCacheSizeGB", "{{ .Values.realtimedb.wiredTigerSizeGB }}"]
+{{- end }}        
         ports:
         - containerPort: {{ .Values.realtimedb.service.targetPort }}
           name: 27017tcp270172
@@ -53,12 +58,12 @@ spec:
           name: realtimedb-data
 {{- if (not .Values.global.localStorageEnabled) }}
           subPath: realtimedb
-{{- end }}          
+{{- end }}
 {{- if .Values.global.limitsEnabled }}
         resources:
           limits:
             cpu: "500m"
-            memory: "1Gi"
+            memory: "4Gi"
           requests:
             cpu: "1m"
             memory: "1Mi"
@@ -78,10 +83,11 @@ spec:
              memory: "500Mi"
            requests:
              cpu: "1m"
-             memory: "1Mi"
+             memory: "128Mi"
 {{- end }}
       restartPolicy: Always
       volumes:
       - name: realtimedb-data
         persistentVolumeClaim:
           claimName: realtimedb-pvc
+{{ end }}

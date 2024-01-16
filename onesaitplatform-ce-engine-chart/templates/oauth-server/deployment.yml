@@ -1,0 +1,147 @@
+{{- if .Values.deployment.selector.oauthserver }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "onesait-platform.oauthserver.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "onesait-platform.oauthserver.name" . }}
+    group: {{ .Values.global.groupName }}
+spec:
+  replicas: {{ .Values.global.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "onesait-platform.oauthserver.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "onesait-platform.oauthserver.name" . }}
+    spec:
+{{- if .Values.global.affinityNodeRules }}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - {{ include "onesait-platform.oauthserver.name" . }}
+            topologyKey: {{ .Values.global.nodeKey }}
+{{ end }}
+{{- if .Values.global.setNodesOnDeployments }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: {{ .Values.global.nodeKey }}
+                operator: In
+                values:
+                {{- range .Values.global.workerNodes }}
+                - {{ .node }}
+                {{- end }}
+
+{{ end }}
+      containers:
+      - name: {{ include "onesait-platform.oauthserver.name" . }}
+        image: "{{ .Values.oauthserver.image.repository }}:{{ .Values.global.image.tag }}"
+        imagePullPolicy: {{ .Values.oauthserver.image.pullPolicy }}
+{{- if .Values.global.healthChecksEnabled }}
+        readinessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 20
+          periodSeconds: 5
+          successThreshold: 2
+          tcpSocket:
+            port: {{ .Values.oauthserver.service.targetPort }}
+          timeoutSeconds: 2
+{{- end }}
+        env:
+        - name: SERVER_NAME
+          value: "{{ .Values.global.env.serverName }}"
+        - name: CONFIGDBMASTERURL
+          value: "{{ .Values.global.env.configDbMasterUrl }}"
+        - name: CONFIGDBURL
+          value: "{{ .Values.global.env.configDbUrl }}"
+        - name: CONFIGDBUSER
+          value: "{{ .Values.global.env.configDbUser }}"
+        - name: CONFIGDBPASS
+          valueFrom:
+            secretKeyRef:
+              key: CONFIGDBPASS
+              name: onesait-secret
+        - name: CONFIGDB_DRIVER
+          value: "{{ .Values.global.env.configDbDriver }}"
+        - name: CONFIGDB_DIALECT
+          value: "{{ .Values.global.env.configDbDialect }}"              
+        - name: REALTIMEDBUSER
+          value: "{{ .Values.global.env.realtimeDbUser }}"
+        - name: REALTIMEDBPASS
+          valueFrom:
+            secretKeyRef:
+              key: REALTIMEDBPASS
+              name: onesait-secret
+        - name: HZ_SERVICE_DISCOVERY_STRATEGY
+          value: "{{ .Values.global.env.hzServiceDiscoveryStrategy }}"
+        - name: HZ_ZOOKEEPER_URL
+          value: "{{ .Values.global.env.hzZookeeperUrl }}"
+        - name: ONESAIT_PROPERTIES
+          value: "{{ .Values.oauthserver.env.onesaitProperties }}"
+        - name: HTTP_LOG_LEVEL
+          value: "{{ .Values.global.env.httpLogLevel }}"
+        - name: MULTITENANCY_ENABLED
+          value: "{{ .Values.oauthserver.env.multitenancyEnabled }}"
+        - name: AUDITGLOBALNOTIFY
+          value: "{{ .Values.global.env.auditGlobalNotify }}"
+        - name: AUTH_PROVIDER
+          value: "{{ .Values.oauthserver.env.authProvider }}"
+        - name: LDAP_ADMIN_DN
+          value: "{{ .Values.oauthserver.env.ldapAdminDn }}"
+        - name: LDAP_ADMIN_PASSWORD
+          value: "{{ .Values.oauthserver.env.ldapAdminPassword }}"
+        - name: LDAP_ADMIN_WHITELIST
+          value: "{{ .Values.oauthserver.env.ldapAdminWhitelist }}"
+        - name: LDAP_AUTH_REGEX
+          value: "{{ .Values.oauthserver.env.ldapAuthRegex }}"
+        - name: LDAP_BASE_DN
+          value: "{{ .Values.oauthserver.env.ldapBaseDn }}"
+        - name: LDAP_DEFAULT_ROLE
+          value: "{{ .Values.oauthserver.env.ldapDefaultRole }}"
+        - name: LDAP_GROUP_WHITELIST
+          value: "{{ .Values.oauthserver.env.ldapGroupWhitelist }}"
+        - name: LDAP_IGNORE_PARTIAL_RESULT
+          value: "{{ .Values.oauthserver.env.ldapIgnorePartialResult }}"
+        - name: LDAP_IMPORT_USERS
+          value: "{{ .Values.oauthserver.env.ldapImportUsers }}"
+        - name: LDAP_ROLES_MEMBER_ATT
+          value: "{{ .Values.oauthserver.env.ldapRolesMemberAtt }}"
+        - name: LDAP_URL
+          value: "{{ .Values.oauthserver.env.ldapUrl }}"
+        ports:
+        - containerPort: {{ .Values.oauthserver.service.targetPort }}
+          name: 21000tcp210002
+          protocol: TCP
+{{- if .Values.global.localStorageEnabled }}
+        volumeMounts:
+        - mountPath: /var/log/platform-logs
+          name: logs
+{{- end }}
+{{- if .Values.global.limitsEnabled }}
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "1.5Gi"
+          requests:
+            cpu: "1m"
+            memory: "1Mi"
+{{- end }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+{{- if .Values.global.localStorageEnabled }}
+      volumes:
+      - name: logs
+        persistentVolumeClaim:
+          claimName: logs-pvc
+{{- end }}
+{{- end }}

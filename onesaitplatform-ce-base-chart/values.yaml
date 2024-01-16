@@ -4,29 +4,41 @@ global:
   replicaCount: 0
   replicaInitCount: 1
   limitsEnabled: true
+  healthChecksEnabled: true
+  keepPersistence: true
+  skipPersistenceDeployment: false
   localStorageEnabled: false
   localStoragePath: /datadrive
-  healthChecksEnabled: true
-  sideCarContainersEnabled: false
   storageClassName: managed-premium
   storageClassProvisioned: false
   logStorageClassName: Azurefile
   logStoragesize: 20Gi
   storageClassOnPvcsEnabled: false
+  sideCarContainersEnabled: false
   loadbalancerExternalTrafficPolicyClusterEnabled: false
-  affinityNodeRules: false
+  streamsetsSdcSecurityContext: false
+  flowengineSecurityContext: false
   nginxConfPersistenceEnabled: false
   nginxConfigAsConfigMap: true
+  nginxControllerPresent: true
+  nginxPlatformLegacyCompatibility: false
+  setIngressTLS: true
+  tlsIngressEnabled: true
+  certificateAwsArn: none
   webProjectsSharedPvc: false
-  deploySchedulerDb: false
-  deployQuasar: false
-  deployConfigInit: false
+  configDbType: mariadb
+  kafkaAuthUrl: false
+  gcpFilesEnabled: false
+  prestoEnabled: false
+  externalDatabase: false
+  affinityNodeRules: false
   setNodesOnDeployments: false
+  nodeKey: kubernetes.io/hostname
   workerNodes:
     - node: worker
     - node: worker2
   image:
-    tag: 2.1.0-ce
+    tag: 5.2.0-ce
   env:
     serverName: "localhost"
     configDbMasterUrl: "jdbc:mysql://configdb:3306/onesaitplatform_master_config?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&useSSL=false&autoReconnect=true"
@@ -34,24 +46,35 @@ global:
     schedulerDbUrl: "jdbc:mysql://configdb:3306/onesaitplatform_scheduler?useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&useSSL=false&autoReconnect=true"
     configDbUser: "root"
     configDbPass: "changeIt!"
+    configDbDriver: "com.mysql.cj.jdbc.Driver"
+    configDbDialect: "org.hibernate.dialect.MySQL5InnoDBDialect"
     realtimeDbUser: "platformadmin"
     realtimeDbPass: "0pen-platf0rm-2018!"
+    schedulerDbUser: "root"
+    schedulerDbPass: "changeIt!"
+    schedulerDbDriver: "com.mysql.cj.jdbc.Driver"
+    schedulerDbDialect: "org.hibernate.dialect.MySQL5Dialect"
+    quartzDriver: "org.quartz.impl.jdbcjobstore.StdJDBCDelegate"
     realtimeDbWriteConcern: "UNACKNOWLEDGED"
     realtimeDbServers: "realtimedb:27017"
     realtimeDbName: "onesaitplatform_rtdb"
-    kafkaEnabled: "false"
+    kafkaEnabled: false
     kafkaHost: kafkaservice
     hzServiceDiscoveryStrategy: zookeeper
     hzZookeeperUrl: zookeeper:2181
     ingressHostName: example.onesaitplatform.com
+    auditGlobalNotify: "false"
+    elasticEnabled: false
+    httpLogLevel: "INFO"
+    opendataPath: "opendata"
 
 # Variables for configdb deployment/service/storage
 configdb:
   nameOverride: configdb
   image:
-    repository: registry.onesaitplatform.com/onesaitplatform/configdb
+    repository: onesaitplatform/configdb
     tag: mariadb
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
   service:
     type: ClusterIP
     port: 3306
@@ -59,41 +82,29 @@ configdb:
   storage:
     size: 1Gi
 
-# Variables for schedulerdb deployment/service/storage
-schedulerdb:
-  nameOverride: schedulerdb
-  image:
-    repository: registry.onesaitplatform.com/onesaitplatform/schedulerdb
-    tag: mariadb
-    pullPolicy: Always
-  service:
-    type: ClusterIP
-    port: 3306
-    targetPort: 3306
-  storage:
-    size: 10Gi
-
 # Variables for realtimedb deployment/service/storage
 realtimedb:
   nameOverride: realtimedb
   image:
-    repository: registry.onesaitplatform.com/onesaitplatform/realtimedb
-    tag: 4.4
-    pullPolicy: Always
+    repository: onesaitplatform/realtimedb
+    tag: "5.0"
+    pullPolicy: IfNotPresent
   service:
     type: ClusterIP
     port: 27017
     targetPort: 27017
   storage:
     size: 30Gi
+  customWiredTiger: false
+  wiredTigerSizeGB: 1 
 
 # Variables for quasar deployment/service
 quasar:
   nameOverride: quasar
   image:
-    repository: registry.onesaitplatform.com/onesaitplatform/quasar
+    repository: onesaitplatform/quasar
     tag: 14
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
   service:
     type: ClusterIP
     port: 10800
@@ -107,23 +118,26 @@ quasar:
 zookeeper:
   nameOverride: zookeeper
   image:
-    repository: registry.onesaitplatform.com/onesaitplatform/zookeeper-secured
-    tag: stable
-    pullPolicy: Always
+    repository: onesaitplatform/zookeeper-secured
+    tag: cp-6.1.1
+    pullPolicy: IfNotPresent
   service:
     type: ClusterIP
     port: 2181
     targetPort: 2181
   env:
     zookeperClientPort: "2181"
+  storage:
+    dataSize: 5Gi
+    logsSize: 5Gi
 
 # Variables for kafka deployment/service
 kafka:
   nameOverride: kafkaservice
   image:
-    repository: registry.onesaitplatform.com/onesaitplatform/kafka-secured
-    tag: stable
-    pullPolicy: Always
+    repository: onesaitplatform/kafka-secured
+    tag: cp-6.1.1
+    pullPolicy: IfNotPresent
   service:
     type: ClusterIP
     tcp:
@@ -138,17 +152,20 @@ kafka:
     kafkaZookeeperConnect: "zookeeper:2181"
     kafkaAdvertisedListeners: "SASL_PLAINTEXT://kafkaservice:9095,PLAINTEXT://kafkaservice:9092"
     kafkaSuperUsers: "User:admin"
+    kafkaLogDirs: "/var/lib/kafka/data"
     serverName: "localhost"
+    authUrl: "http://iotbrokerservice.onesaitplatform:19000/iot-broker/rest/"
   storage:
     size: 21Gi
+    logsSize: 10Gi
 
 # Variables for elasticdb deployment/service/storage
 elasticdb:
   nameOverride: elasticdb
   image:
-    repository: registry.onesaitplatform.com/onesaitplatform/elasticdb
-    tag: stable
-    pullPolicy: Always
+    repository: onesaitplatform/elasticdb
+    tag: 7.9.3
+    pullPolicy: IfNotPresent
   service:
     type: ClusterIP
     tcp1:
@@ -164,45 +181,69 @@ elasticdb:
 configinit:
   nameOverride: configinit
   image:
-    repository: registry.onesaitplatform.com/onesaitplatform/configinit
+    repository: onesaitplatform/configinit
     pullPolicy: Always
   env:
     loadElasticDb: "false"
     loadMongoDb: "false"
+    loadGraylogDb: "false"
+    loadMailConfig: "false"
     multitenantMode: "false"
+    createDataFlowInstanceVertical: "false"
     configDbMasterUrlCreateIfNotExists: "&createDatabaseIfNotExist=true"
+    rtdbExecutionTimeout: 10000
+    rtdbQueriesLimit: 2000
+    mongoSocketTimeout: 5000
+    mongoConnectTimeout: 30000
+    mongoWaitTime: 5000
+    mongoPoolSize: 100
+    mongoSslEnabled: false
+    iotBrokerTimeout: 60000
     onesaitProperties:
+    loadTestData: false
 
 # Variables for controlpanel deployment
 controlpanel:
   nameOverride: controlpanelservice
   image:
-    repository: registry.onesaitplatform.com/onesaitplatform/controlpanel
-    pullPolicy: Always
+    repository: onesaitplatform/controlpanel
+    pullPolicy: IfNotPresent
   service:
     type: ClusterIP
     port: 18000
     targetPort: 18000
   env:
     capthaOn: "false"
-    graviteeClientId: onesait
-    graviteeClientSecret: admin
-    graviteeOn: "false"
     ksqlEnable: "false"
-    streamsetsSdcVersion: "3.10.0"
+    streamsetsSdcVersion: "3.18.1"
     tfaEnabled: "false"
-    auditGlobalNotify: "false"
-    onesaitProperties:
+    authProvider: "configdb"
+    ldapAdminDn: ""
+    ldapAdminPassword: ""
+    ldapAdminWhitelist: "administrator,admin"
+    ldapAuthRegex: "(.*)"
+    ldapBaseDn: "OU=''"
+    ldapDefaultRole: "ROLE_USER"
+    ldapGroupWhitelist:
+    ldapIgnorePartialResult: "false"
+    ldapImportUsers: "true"
+    ldapRolesMemberAtt: ""
+    ldapUrl: ""
+    multitenancyEnabled: "false"
+    notebookPlatformSSO: "true"
+    onesaitProperties: >-
+      {"onesaitplatform":{"webproject":{"rootfolder":{"path":"/opt/bitnami/nginx/webprojects/"}}}}
   storage:
     accessMode: ReadWriteOnce
     size: 2Gi
+    prestoSize: 2Gi
 
 # Variables for cacheserver deployment
 cacheserver:
   nameOverride: cacheservice
   image:
-    repository: registry.onesaitplatform.com/onesaitplatform/cacheservice
-    pullPolicy: Always
+    repository: onesaitplatform/cacheservice
+    pullPolicy: IfNotPresent
   service:
     type: ClusterIP
     port: 20001
@@ -214,8 +255,8 @@ cacheserver:
 monitoringui:
   nameOverride: monitoringuiservice
   image:
-    repository: registry.onesaitplatform.com/onesaitplatform/monitoringui
-    pullPolicy: Always
+    repository: onesaitplatform/monitoringui
+    pullPolicy: IfNotPresent
   service:
     type: ClusterIP
     port: 18100
@@ -228,21 +269,22 @@ monitoringui:
 loadbalancer:
   nameOverride: loadbalancer
   image:
-    repository: registry.onesaitplatform.com/onesaitplatform/loadbalancer
-    tag: full
-    pullPolicy: Always
+    repository: onesaitplatform/loadbalancer
+    tag: 5.0.0
+    pullPolicy: IfNotPresent
   service:
     type: ClusterIP
     hostIp: localhost
     http:
       port: 9443
       targetPort: 9443
-    https:
-      port: 8443
-      targetPort: 8443
+    flowengine:
+      port: 19999
+      targetPort: 19999
   storage:
     size: 5Gi
 
 # Variables for ingress
 loadbalanceringress:
   nameOverride: loadbalanceringress
+
