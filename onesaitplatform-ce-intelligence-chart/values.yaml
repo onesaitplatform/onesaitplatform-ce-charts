@@ -102,7 +102,7 @@ notebook:
   nameOverride: zeppelin
   image:
     repository: onesaitplatform/notebook
-    tag: 0.10.1-py3-R-op.5.0.0-sso-lite-v2
+    tag: 2.0.2-py3
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
