@@ -25,15 +25,32 @@ global:
   localStorageEnabled: false
   env:
     serverName: "example.onesaitplatform.com"
-    ingressHostName: example.onesaitplatform.com
 ```
 
 - Helm installation command:
 
 ```
-helm install onesaitplatform/onesaitplatform-ce-base-chart \
-               -f base-values.yml \
+helm install onesaitplatform/onesaitplatform-ce-intelligence-chart \
+               -f intelligence-values.yml \
                --namespace <your_k8s_namespace> \
                --generate-name \
                --version 5.2.0-ce
 ```
+- For adding the modules included in engine/intelligence charts, you should patch the loadbalancer deployment. This action can be done with the kubectl command:
+
+```
+kubectl patch deployment loadbalancer --patch "$(cat onesaitplatform-ce-intelligence-chart/conf-files/nginx-config-volumes.yaml)"
+```
+
+- There is also a plugin designed for this feature:
+
+### Plugin installation
+
+```
+> helm plugin install https://github.com/onesaitplatform/patch-lb-helmplugin.git
+```
+
+### Plugin usage:
+
+```
+> helm addconfig --module intelligence
