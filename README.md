@@ -68,7 +68,7 @@ global:
     serverName: "example.onesaitplatform.com"
 ```
 
-- For adding the modules included in engine/intelligence charts, you should patch the loadbalancer deployment. This action can be done with the kubectl command:
+- In order to access the modules included in engine/intelligence charts through loadbalancer, you should patch the loadbalancer deployment. This action can be done with the kubectl command:
 
 ```
 kubectl patch deployment loadbalancer --patch "$(cat onesaitplatform-ce-engine-chart/conf-files/nginx-config-volumes.yaml)"
