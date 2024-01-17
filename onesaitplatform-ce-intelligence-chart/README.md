@@ -36,7 +36,7 @@ helm install onesaitplatform/onesaitplatform-ce-intelligence-chart \
                --generate-name \
                --version 5.2.0-ce
 ```
-- For adding the modules included in engine/intelligence charts, you should patch the loadbalancer deployment. This action can be done with the kubectl command:
+- In order to access the modules included in intelligence chart through loadbalancer, you should patch the loadbalancer deployment. This action can be done with the kubectl command:
 
 ```
 kubectl patch deployment loadbalancer --patch "$(cat onesaitplatform-ce-intelligence-chart/conf-files/nginx-config-volumes.yaml)"
