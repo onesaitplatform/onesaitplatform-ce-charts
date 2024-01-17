@@ -26,6 +26,7 @@ global:
   tlsIngressEnabled: true
   certificateAwsArn: none
   webProjectsSharedPvc: false
+  deployQuasar: false
   configDbType: mariadb
   kafkaAuthUrl: false
   gcpFilesEnabled: false
