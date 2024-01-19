@@ -110,3 +110,10 @@ where module_name can take one of these values:
   - intelligence
   - engine
 ```
+## Control Panel access
+
+You can access with these users/passwords:
+
+administrator/Community2019!
+developer/Community2019!
+analytics/Community2019!
