@@ -114,8 +114,6 @@ where module_name can take one of these values:
 
 You can access with these users/passwords:
 
-administrator/Community2019! 
-
-developer/Community2019! 
-
-analytics/Community2019!
+ - administrator/Community2019! 
+ - developer/Community2019! 
+ - analytics/Community2019!
