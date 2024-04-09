@@ -1,0 +1,146 @@
+{{- if .Values.deployment.selector.notebook }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "onesait-platform.notebook.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "onesait-platform.notebook.name" . }}
+    group: {{ .Values.global.groupName }}
+spec:
+  replicas: {{ .Values.global.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "onesait-platform.notebook.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "onesait-platform.notebook.name" . }}
+    spec:
+{{- if .Values.global.affinityNodeRules }}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - {{ include "onesait-platform.notebook.name" . }}
+            topologyKey: {{ .Values.global.nodeKey }}
+{{ end }}
+{{- if .Values.global.setNodesOnDeployments }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: {{ .Values.global.nodeKey }}
+                operator: In
+                values:
+                {{- range .Values.global.workerNodes }}
+                - {{ .node }}
+                {{- end }}
+
+{{ end }}
+      containers:
+      - name: {{ include "onesait-platform.notebook.name" . }}
+        image: "{{ .Values.notebook.image.repository }}:{{ .Values.notebook.image.tag }}"
+        imagePullPolicy: {{ .Values.notebook.image.pullPolicy }}
+{{- if .Values.global.healthChecksEnabled }}
+        readinessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 30
+          periodSeconds: 5
+          successThreshold: 2
+          tcpSocket:
+            port: {{ .Values.notebook.service.targetPort }}
+          timeoutSeconds: 2
+{{- end }}
+        env:
+        - name: ZEPPELIN_PORT
+          value: "8080"
+        ports:
+        - containerPort: {{ .Values.notebook.service.targetPort }}
+          name: 8080tcp8080
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /home/notebook
+          name: notebook-wks
+{{- if (not .Values.global.localStorageEnabled) }}
+          subPath: notebook/wks
+{{- end }}
+        - mountPath: /zeppelin/conf
+          name: notebook-conf
+{{- if (not .Values.global.localStorageEnabled) }}
+          subPath: notebook/conf
+{{- end }}
+        - mountPath: /zeppelin/notebook
+          name: notebook-data
+{{- if (not .Values.global.localStorageEnabled) }}
+          subPath: notebook/notebook
+{{- end }}
+{{- if .Values.global.limitsEnabled }}
+        resources:
+          limits:
+            cpu: "1"
+            memory: "4Gi"
+          requests:
+            cpu: "1m"
+            memory: "1Mi"
+{{- end }}
+      dnsPolicy: ClusterFirst
+{{- if .Values.global.sideCarContainersEnabled }}
+      initContainers:
+       - name: volume-mount-wks
+         image: busybox
+         command: ["sh", "-c", "chmod 777 /home/notebook"]
+         volumeMounts:
+         - name: notebook-wks
+           mountPath: /home/notebook
+         resources:
+           limits:
+             cpu: "1"
+             memory: "500Mi"
+           requests:
+             cpu: "1m"
+             memory: "1Mi"
+       - name: volume-mount-conf
+         image: busybox
+         command: ["sh", "-c", "chmod 777 /zeppelin/conf"]
+         volumeMounts:
+         - name: notebook-conf
+           mountPath: /zeppelin/conf
+         resources:
+           limits:
+             cpu: "1"
+             memory: "500Mi"
+           requests:
+             cpu: "1m"
+             memory: "1Mi"
+       - name: volume-mount-data
+         image: busybox
+         command: ["sh", "-c", "chmod 777 /zeppelin/notebook"]
+         volumeMounts:
+         - name: notebook-data
+           mountPath: /zeppelin/notebook
+         resources:
+           limits:
+             cpu: "1"
+             memory: "500Mi"
+           requests:
+             cpu: "1m"
+             memory: "1Mi"
+{{- end }}
+      restartPolicy: Always
+      volumes:
+      - name: notebook-data
+        persistentVolumeClaim:
+          claimName: notebook-pvc-data
+      - name: notebook-conf
+        persistentVolumeClaim:
+          claimName: notebook-pvc-conf
+      - name: notebook-wks
+        persistentVolumeClaim:
+          claimName: notebook-pvc-wks
+{{- end }} 

@@ -1,4 +1,4 @@
-{{- if (not .Values.global.deployConfigInit) }}
+{{- if and (not .Values.global.deployConfigInit) (not .Values.global.skipPersistenceDeployment) }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -8,8 +8,34 @@ metadata:
     app: {{ include "onesait-platform.configinit.name" . }}
     group: {{ .Values.global.groupName }}
 spec:
+  ttlSecondsAfterFinished: 86400
   template:
     spec:
+{{- if .Values.global.affinityNodeRules }}
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - preference:
+              matchExpressions:
+              - key: app
+                operator: NotIn
+                values:
+                - {{ include "onesait-platform.configinit.name" . }}
+            weight: 100
+{{ end }}
+{{- if .Values.global.setNodesOnDeployments }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: {{ .Values.global.nodeKey }}
+                operator: In
+                values:
+                {{- range .Values.global.workerNodes }}
+                - {{ .node }}
+                {{- end }}
+{{ end }}
       containers:
       - name: load-realtimedb
         image: "{{ .Values.configinit.image.repository }}:{{ .Values.global.image.tag }}"
@@ -20,7 +46,7 @@ spec:
         - name: LOADCONFIGDB
           value: "false"
         - name: LOADMONGODB
-          value: "false"
+          value:  "{{ .Values.configinit.env.loadMongoDb }}"
         - name: SERVER_NAME
           value: "{{ .Values.global.env.serverName }}"
         - name: CONFIGDBMASTERURL
@@ -34,6 +60,10 @@ spec:
             secretKeyRef:
               key: CONFIGDBPASS
               name: onesait-secret
+        - name: CONFIGDB_DRIVER
+          value: "{{ .Values.global.env.configDbDriver }}"
+        - name: CONFIGDB_DIALECT
+          value: "{{ .Values.global.env.configDbDialect }}"
         - name: REALTIMEDBUSER
           value: "{{ .Values.global.env.realtimeDbUser }}"
         - name: REALTIMEDBPASS
@@ -47,8 +77,30 @@ spec:
           value: "{{ .Values.global.env.realtimeDbName }}"
         - name: UPDATE_MODE_MULTITENANT
           value: "{{ .Values.configinit.env.multitenantMode }}"
+        - name: RTDB_EXECUTION_TIMEOUT
+          value: "{{ .Values.configinit.env.rtdbExecutionTimeout }}"
+        - name: RTDB_QUERIES_LIMIT
+          value: "{{ .Values.configinit.env.rtdbQueriesLimit }}"
+        - name: MONGO_SOCKET_TIMEOUT
+          value: "{{ .Values.configinit.env.mongoSocketTimeout }}"
+        - name: MONGO_CONNECT_TIMEOUT
+          value: "{{ .Values.configinit.env.mongoConnectTimeout }}"
+        - name: MONGO_WAIT_TIME
+          value: "{{ .Values.configinit.env.mongoWaitTime }}"
+        - name: MONGO_POOL_SIZE
+          value: "{{ .Values.configinit.env.mongoPoolSize }}"
+        - name: MONGO_SSL_ENABLED
+          value: "{{ .Values.configinit.env.mongoSslEnabled }}"
+        - name: MONGO_USE_QUASAR
+          value: "{{ .Values.global.deployQuasar }}"
+        - name: IOTBROKER_SESSION_TIMEOUT
+          value: "{{ .Values.configinit.env.iotBrokerTimeout }}"
         - name: ONESAIT_PROPERTIES
           value: "{{ .Values.configinit.env.onesaitProperties }}"
+        - name: LOADTESTDATA
+          value: "{{ .Values.configinit.env.loadTestData }}"   
+        - name: CREATE_DATAFLOW_INSTANCE_VERTICAL
+          value: "{{ .Values.configinit.env.createDataFlowInstanceVertical }}"              
         ports:
         - containerPort: 21000
           name: 21000tcp210002
@@ -64,6 +116,7 @@ spec:
 {{- end }}
       restartPolicy: Never
       initContainers:
+{{- if and (not .Values.global.externalDatabase) (eq .Values.global.configDbType "mariadb")  }}
        - name: check-db-status
          image: mariadb:10.3.22
          imagePullPolicy: {{ .Values.configinit.image.pullPolicy }}
@@ -82,6 +135,27 @@ spec:
              cpu: "1m"
              memory: "1Mi"
 {{- end }}
+{{- end }}
+{{- if and (not .Values.global.externalDatabase) (eq .Values.global.configDbType "postgresql")  }}
+       - name: check-db-status
+         image: postgres:13-alpine
+         imagePullPolicy: {{ .Values.configinit.image.pullPolicy }}
+         command: ['sh', '-c',
+          'until pg_isready -U postgres -h configdb -p 5432;
+          do echo waiting for database; sleep 2; done;']
+         env:
+         - name: POSTGRES_PASSWORD
+           value: "mypassword123"
+{{- if .Values.global.limitsEnabled }}
+         resources:
+           limits:
+             cpu: "1"
+             memory: "500Mi"
+           requests:
+             cpu: "1m"
+             memory: "1Mi"
+{{- end }}
+{{- end }}
        - name: load-configdb
          image: {{ .Values.configinit.image.repository }}:{{ .Values.global.image.tag }}
          imagePullPolicy: {{ .Values.configinit.image.pullPolicy }}
@@ -98,6 +172,10 @@ spec:
            value: "{{ .Values.global.env.configDbUrl }}"
          - name: CONFIGDBUSER
            value: "{{ .Values.global.env.configDbUser }}"
+         - name: CONFIGDB_DRIVER
+           value: "{{ .Values.global.env.configDbDriver }}"
+         - name: CONFIGDB_DIALECT
+           value: "{{ .Values.global.env.configDbDialect }}"
          - name: REALTIMEDBUSER
            value: "{{ .Values.global.env.realtimeDbUser }}"
          - name: REALTIMEDBSERVERS
@@ -106,8 +184,38 @@ spec:
            value: "{{ .Values.global.env.realtimeDbName }}"
          - name: UPDATE_MODE_MULTITENANT
            value: "{{ .Values.configinit.env.multitenantMode }}"
+         - name: RTDB_EXECUTION_TIMEOUT
+           value: "{{ .Values.configinit.env.rtdbExecutionTimeout }}"
+         - name: RTDB_QUERIES_LIMIT
+           value: "{{ .Values.configinit.env.rtdbQueriesLimit }}"
+         - name: MONGO_SOCKET_TIMEOUT
+           value: "{{ .Values.configinit.env.mongoSocketTimeout }}"
+         - name: MONGO_CONNECT_TIMEOUT
+           value: "{{ .Values.configinit.env.mongoConnectTimeout }}"
+         - name: MONGO_WAIT_TIME
+           value: "{{ .Values.configinit.env.mongoWaitTime }}"
+         - name: MONGO_POOL_SIZE
+           value: "{{ .Values.configinit.env.mongoPoolSize }}"
+         - name: MONGO_SSL_ENABLED
+           value: "{{ .Values.configinit.env.mongoSslEnabled }}"
+         - name: MONGO_USE_QUASAR
+           value: "{{ .Values.global.deployQuasar }}"
+         - name: IOTBROKER_SESSION_TIMEOUT
+           value: "{{ .Values.configinit.env.iotBrokerTimeout }}"
          - name: ONESAIT_PROPERTIES
            value: "{{ .Values.configinit.env.onesaitProperties }}"
+         - name: LOADTESTDATA
+           value: "{{ .Values.configinit.env.loadTestData }}"
+         - name: CONFIGDBPASS
+           valueFrom:
+             secretKeyRef:
+               key: CONFIGDBPASS
+               name: onesait-secret
+         - name: REALTIMEDBPASS
+           valueFrom:
+             secretKeyRef:
+               key: REALTIMEDBPASS
+               name: onesait-secret
 {{- if .Values.global.limitsEnabled }}
          resources:
            limits:

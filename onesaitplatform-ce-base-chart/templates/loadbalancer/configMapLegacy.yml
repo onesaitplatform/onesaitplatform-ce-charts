@@ -1,0 +1,74 @@
+{{- if and (.Values.global.nginxConfigAsConfigMap) (.Values.global.nginxPlatformLegacyCompatibility) }}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: loadbalancer-config
+  namespace: {{ .Release.Namespace }}
+data:
+  nginx.conf: >
+    server_names_hash_bucket_size 128;
+
+    server {
+        listen 9443;
+        server_name _;
+
+        include /opt/bitnami/nginx/conf/server_blocks/api/*;
+        include /opt/bitnami/nginx/conf/server_blocks/engine/*;
+        include /opt/bitnami/nginx/conf/server_blocks/intelligence/*;
+        include /opt/bitnami/nginx/conf/server_blocks/tools/*;
+        include /opt/bitnami/nginx/conf/server_blocks/opendata/*;
+        include /opt/bitnami/nginx/conf/server_blocks/things/*;
+        include /opt/bitnami/nginx/conf/server_blocks/log/*;
+        include /opt/bitnami/nginx/conf/server_blocks/im/*;
+
+        add_header Strict-Transport-Security "max-age=31536000" always;
+
+        location = / {
+             return 301 http://$host/controlpanel;
+        }
+
+        location ~ ^/(controlpanel/actuator*)/ {
+             return 301 http://$host/controlpanel;
+        }
+
+    location /controlpanel {
+      set $hostv "controlpanelservice:18000";
+    proxy_pass http://controlpanelservice:18000/controlpanel;
+
+    proxy_read_timeout 360s;
+
+
+    proxy_http_version 1.1;
+
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+    proxy_set_header X-Forwarded-Proto http;
+
+          proxy_redirect ~^http://controlpanelservice:18000(.+)$ https://$host$1;
+
+          if ($uri ~ "^.*(swagger-ui|api-docs).*"){
+            set $hostv $http_host;
+          }
+
+        proxy_set_header Host $hostv;
+    }
+
+      location /monitoring {
+            proxy_pass  http://monitoringuiservice:18100/monitoring;
+          proxy_read_timeout 360s;
+    proxy_redirect ~^http://monitoringuiservice:18100(.+)$ https://$host$1;
+
+          proxy_http_version 1.1;
+          proxy_set_header Upgrade $http_upgrade;
+          proxy_set_header Connection "upgrade";
+          proxy_set_header X-Forwarded-For $remote_addr;
+      }
+
+      location /web {
+            alias /usr/local/webprojects;
+      }
+    }
+    include /opt/bitnami/nginx/conf/server_blocks/minio-console/*;
+    include /opt/bitnami/nginx/conf/server_blocks/minio-browser/*;
+    include /opt/bitnami/nginx/conf/server_blocks/flowengineha/*;
+{{- end }}

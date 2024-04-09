@@ -1,3 +1,4 @@
+{{- if and (not .Values.global.externalDatabase) (eq .Values.global.configDbType "postgresql") }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -22,7 +23,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: kubernetes.io/hostname
+              - key: {{ .Values.global.nodeKey }}
                 operator: In
                 values:
                 {{- range .Values.global.workerNodes }}
@@ -30,6 +31,7 @@ spec:
                 {{- end }}
 
 {{ end }}
+
       containers:
       - name: {{ include "onesait-platform.configdb.name" . }}
         image: "{{ .Values.configdb.image.repository }}:{{ .Values.configdb.image.tag }}"
@@ -37,7 +39,7 @@ spec:
 {{- if .Values.global.healthChecksEnabled }}
         readinessProbe:
           failureThreshold: 3
-          initialDelaySeconds: 100
+          initialDelaySeconds: 15
           periodSeconds: 5
           successThreshold: 2
           tcpSocket:
@@ -46,14 +48,14 @@ spec:
 {{- end }}
         ports:
         - containerPort: {{ .Values.configdb.service.targetPort }}
-          name: 3306tcp33062
+          name: 5432tcp54322
           protocol: TCP
         volumeMounts:
-        - mountPath: /var/lib/mysql
+        - mountPath: /var/lib/postgresql/data
           name: configdb-data
 {{- if (not .Values.global.localStorageEnabled) }}
           subPath: configdb
-{{- end }}          
+{{- end }}
 {{- if .Values.global.limitsEnabled }}
         resources:
           limits:
@@ -61,17 +63,17 @@ spec:
             memory: "800Mi"
           requests:
             cpu: "1m"
-            memory: "1Mi"
+            memory: "128Mi"
 {{- end }}
       dnsPolicy: ClusterFirst
 {{- if .Values.global.sideCarContainersEnabled }}
       initContainers:
        - name: volume-mount
          image: busybox
-         command: ["sh", "-c", "chmod 777 /var/lib/mysql"]
+         command: ["sh", "-c", "chmod 777 /var/lib/postgresql/data"]
          volumeMounts:
          - name: configdb-data
-           mountPath: /var/lib/mysql
+           mountPath: /var/lib/postgresql/data
          resources:
            limits:
              cpu: "1"
@@ -85,3 +87,4 @@ spec:
       - name: configdb-data
         persistentVolumeClaim:
           claimName: configdb-pvc
+{{ end }}

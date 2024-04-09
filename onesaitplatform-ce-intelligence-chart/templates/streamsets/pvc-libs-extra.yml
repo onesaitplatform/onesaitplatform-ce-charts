@@ -1,0 +1,21 @@
+{{- if and .Values.deployment.selector.streamsets (not .Values.global.skipPersistenceDeployment) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: streamsets-pvc-libs-extra
+  namespace: {{ .Release.Namespace }}
+{{- if .Values.global.keepPersistence }}
+{{- template "annotations.keepresources" }}
+{{- end }}
+spec:
+  accessModes:
+  - ReadWriteOnce
+{{- if .Values.global.localStorageEnabled }}
+  volumeMode: Filesystem
+  volumeName: {{ .Values.persistence.pvs.dataflowlibsextras }}
+{{- end }}
+  storageClassName: {{ .Values.global.storageClassName }}
+  resources:
+    requests:
+      storage: {{ .Values.streamsets.storage.libsSize }}
+{{- end }}

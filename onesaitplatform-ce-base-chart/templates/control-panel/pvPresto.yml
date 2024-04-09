@@ -1,0 +1,32 @@
+{{- if and .Values.global.localStorageEnabled (not .Values.global.skipPersistenceDeployment) .Values.global.prestoEnabled }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Values.persistence.pvs.presto }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    type: local
+{{- if .Values.global.keepPersistence }}
+{{- template "annotations.keepresources" }}
+{{- end }}  
+spec:
+  storageClassName: {{ .Values.global.storageClassName }}
+  capacity:
+    storage: {{ .Values.controlpanel.storage.prestoSize }}
+{{- if .Values.global.setNodesOnDeployments }}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: {{ .Values.global.nodeKey }}
+          operator: In
+          values:
+          {{- range .Values.global.workerNodes }}
+          - {{ .node }}
+          {{- end }}
+{{- end }}
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: {{ .Values.global.localStoragePath }}/onesaitplatform/presto-config
+{{- end }}

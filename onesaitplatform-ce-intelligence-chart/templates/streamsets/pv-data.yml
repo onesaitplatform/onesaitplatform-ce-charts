@@ -1,21 +1,24 @@
-{{- if and .Values.global.localStorageEnabled .Values.global.deploySchedulerDb }}
+{{- if and .Values.global.localStorageEnabled .Values.deployment.selector.streamsets (not .Values.global.skipPersistenceDeployment) }}
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: schedulerdb-pv-volume
+  name: {{ .Values.persistence.pvs.dataflowdata }}
   namespace: {{ .Release.Namespace }}
   labels:
     type: local
+{{- if .Values.global.keepPersistence }}
+{{- template "annotations.keepresources" }}
+{{- end }}
 spec:
   storageClassName: {{ .Values.global.storageClassName }}
   capacity:
-    storage: {{ .Values.schedulerdb.storage.size }}
+    storage: {{ .Values.streamsets.storage.dataSize }}
 {{- if .Values.global.setNodesOnDeployments }}
   nodeAffinity:
     required:
       nodeSelectorTerms:
       - matchExpressions:
-        - key: kubernetes.io/hostname
+        - key: {{ .Values.global.nodeKey }}
           operator: In
           values:
           {{- range .Values.global.workerNodes }}
@@ -25,5 +28,5 @@ spec:
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: {{ .Values.global.localStoragePath }}/onesaitplatform/schedulerdb
+    path: {{ .Values.global.localStoragePath }}/onesaitplatform/streamsets/data
 {{- end }}

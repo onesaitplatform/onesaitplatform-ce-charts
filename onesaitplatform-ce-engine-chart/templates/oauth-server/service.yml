@@ -1,0 +1,19 @@
+{{- if .Values.deployment.selector.oauthserver }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "onesait-platform.oauthserver.name" . }}
+  namespace: {{ .Release.Namespace }}  
+  labels:
+    run: {{ include "onesait-platform.oauthserver.name" . }}
+    k8s-app: {{ include "onesait-platform.oauthserver.name" . }}
+spec:
+  ports:
+  - port: {{ .Values.oauthserver.service.port }}
+    protocol: TCP
+    targetPort: {{ .Values.oauthserver.service.targetPort }}
+  selector:
+    app: {{ include "onesait-platform.oauthserver.name" . }}
+  type: {{ .Values.oauthserver.service.type }}
+  sessionAffinity: None
+{{- end }}

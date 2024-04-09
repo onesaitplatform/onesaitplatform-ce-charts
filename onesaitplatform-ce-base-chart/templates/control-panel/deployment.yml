@@ -26,7 +26,7 @@ spec:
                 operator: In
                 values:
                 - {{ include "onesait-platform.controlpanel.name" . }}
-            topologyKey: "kubernetes.io/hostname"
+            topologyKey: {{ .Values.global.nodeKey }}
 {{ end }}
 {{- if .Values.global.setNodesOnDeployments }}
       affinity:
@@ -34,7 +34,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: kubernetes.io/hostname
+              - key: {{ .Values.global.nodeKey }}
                 operator: In
                 values:
                 {{- range .Values.global.workerNodes }}
@@ -61,18 +61,27 @@ spec:
           value: "{{ .Values.global.env.hzServiceDiscoveryStrategy }}"
         - name: SCHEDULERDBBURL
           value: "{{ .Values.global.env.schedulerDbUrl }}"
+        - name: SCHEDULERDBBUSER
+          value: "{{ .Values.global.env.schedulerDbUser }}"
+        - name: SCHEDULERDBBPASS
+          valueFrom:
+            secretKeyRef:
+              key: SCHEDULERDBBPASS
+              name: onesait-secret
+        - name: SCHEDULERDBBDRIVER
+          value: "{{ .Values.global.env.schedulerDbDriver }}"
+        - name: SCHEDULERDBBDIALECT
+          value: "{{ .Values.global.env.schedulerDbDialect }}"
+        - name: QUARTZ_DRIVER
+          value: "{{ .Values.global.env.quartzDriver }}"
         - name: HZ_ZOOKEEPER_URL
           value: "{{ .Values.global.env.hzZookeeperUrl }}"
         - name: CAPTCHA_ON
           value: "{{ .Values.controlpanel.env.capthaOn }}"
         - name: CLOUD_GATEWAY
           value: "https://{{ .Values.global.env.serverName }}"
-        - name: GRAVITEE_CLIENTID
-          value: "{{ .Values.controlpanel.env.graviteeClientId }}"
-        - name: GRAVITEE_CLIENTSECRET
-          value: "{{ .Values.controlpanel.env.graviteeClientSecret }}"
-        - name: GRAVITEE_ON
-          value: "{{ .Values.controlpanel.env.graviteeOn }}"
+        - name: HTTP_LOG_LEVEL
+          value: "{{ .Values.global.env.httpLogLevel }}"
         - name: KAFKAENABLED
           value: "{{ .Values.global.env.kafkaEnabled }}"
         - name: KAFKAHOST
@@ -85,8 +94,36 @@ spec:
           value: "{{ .Values.controlpanel.env.streamsetsSdcVersion }}"
         - name: TWOFA_ENABLED
           value: "{{ .Values.controlpanel.env.tfaEnabled }}"
+        - name: MULTITENANCY_ENABLED
+          value: "{{ .Values.controlpanel.env.multitenancyEnabled }}"
+        - name: AUTH_PROVIDER
+          value: "{{ .Values.controlpanel.env.authProvider }}"
+        - name: LDAP_ADMIN_DN
+          value: "{{ .Values.controlpanel.env.ldapAdminDn }}"
+        - name: LDAP_ADMIN_PASSWORD
+          value: "{{ .Values.controlpanel.env.ldapAdminPassword }}"
+        - name: LDAP_ADMIN_WHITELIST
+          value: "{{ .Values.controlpanel.env.ldapAdminWhitelist }}"
+        - name: LDAP_AUTH_REGEX
+          value: "{{ .Values.controlpanel.env.ldapAuthRegex }}"
+        - name: LDAP_BASE_DN
+          value: "{{ .Values.controlpanel.env.ldapBaseDn }}"
+        - name: LDAP_DEFAULT_ROLE
+          value: "{{ .Values.controlpanel.env.ldapDefaultRole }}"
+        - name: LDAP_GROUP_WHITELIST
+          value: "{{ .Values.controlpanel.env.ldapGroupWhitelist }}"
+        - name: LDAP_IGNORE_PARTIAL_RESULT
+          value: "{{ .Values.controlpanel.env.ldapIgnorePartialResult }}"
+        - name: LDAP_IMPORT_USERS
+          value: "{{ .Values.controlpanel.env.ldapImportUsers }}"
+        - name: LDAP_ROLES_MEMBER_ATT
+          value: "{{ .Values.controlpanel.env.ldapRolesMemberAtt }}"
+        - name: LDAP_URL
+          value: "{{ .Values.controlpanel.env.ldapUrl }}"
         - name: AUDITGLOBALNOTIFY
-          value: "{{ .Values.controlpanel.env.auditGlobalNotify }}"
+          value: "{{ .Values.global.env.auditGlobalNotify }}"
+        - name: ELASTICSEARCH_ENABLED
+          value: "{{ .Values.global.env.elasticEnabled }}"
         - name: CONFIGDBMASTERURL
           value: "{{ .Values.global.env.configDbMasterUrl }}"
         - name: CONFIGDBURL
@@ -98,6 +135,10 @@ spec:
             secretKeyRef:
               key: CONFIGDBPASS
               name: onesait-secret
+        - name: CONFIGDB_DRIVER
+          value: "{{ .Values.global.env.configDbDriver }}"
+        - name: CONFIGDB_DIALECT
+          value: "{{ .Values.global.env.configDbDialect }}"
         - name: REALTIMEDBUSER
           value: "{{ .Values.global.env.realtimeDbUser }}"
         - name: REALTIMEDBPASS
@@ -108,16 +149,20 @@ spec:
         - name: REALTIMEDBSERVERS
           value: "{{ .Values.global.env.realtimeDbServers }}"
         - name: ONESAIT_PROPERTIES
-          value: "{{ .Values.controlpanel.env.onesaitProperties }}"
-        - name: OPENDATA_URL
-          value: "{{ .Values.global.env.serverName}}{{ .Values.global.env.opendataPath}}"
+          value: {{ .Values.controlpanel.env.onesaitProperties | toJson }}
+        - name: NOTEBOOKPLATFORMAUTH
+          value: "{{ .Values.controlpanel.env.notebookPlatformSSO }}"
+{{- if .Values.global.gcpFilesEnabled }}           
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/usr/local/gcp-credentials/.dockerconfigjson"
+{{- end }}
         ports:
         - containerPort: {{ .Values.controlpanel.service.targetPort }}
           name: 18000tcp18000
           protocol: TCP
         volumeMounts:
 {{- if .Values.global.webProjectsSharedPvc }}
-        - mountPath: /usr/local/webprojects
+        - mountPath: /opt/bitnami/nginx/webprojects
           name: controlpanel-data
 {{- if (not .Values.global.localStorageEnabled) }}
           subPath: controlpanel
@@ -126,6 +171,15 @@ spec:
 {{- if .Values.global.localStorageEnabled }}
         - mountPath: /var/log/platform-logs
           name: logs
+{{- end }}
+{{- if .Values.global.gcpFilesEnabled }} 
+        - mountPath: /usr/local/gcp-credentials/.dockerconfigjson
+          name: gcp
+          subPath: .dockerconfigjson
+{{- end }}
+{{- if .Values.global.prestoEnabled }}
+        - mountPath: /usr/local/presto/catalog/
+          name: presto-catalog
 {{- end }}
 {{- if .Values.global.limitsEnabled }}
         resources:
@@ -138,6 +192,7 @@ spec:
 {{- end }}
       dnsPolicy: ClusterFirst
       initContainers:
+{{- if and (not .Values.global.externalDatabase) (eq .Values.global.configDbType "mariadb") }}
        - name: check-db-status
          image: mariadb:10.3.22
          imagePullPolicy: {{ .Values.configinit.image.pullPolicy }}
@@ -154,7 +209,7 @@ spec:
              memory: "500Mi"
            requests:
              cpu: "1m"
-             memory: "1Mi"
+             memory: "128Mi"
 {{- end }}
        - name: check-config-data
          image: mariadb:10.3.22
@@ -172,7 +227,78 @@ spec:
              memory: "500Mi"
            requests:
              cpu: "1m"
-             memory: "1Mi"
+             memory: "128Mi"
+{{- end }}
+{{- end }}
+{{- if and (not .Values.global.externalDatabase) (eq .Values.global.configDbType "postgresql") }}
+       - name: check-db-status
+         image: postgres:13-alpine
+         imagePullPolicy: {{ .Values.configinit.image.pullPolicy }}
+         command: ['sh', '-c',
+          'until pg_isready -U postgres -h configdb -p 5432;
+          do echo waiting for database; sleep 2; done;']
+         env:
+         - name: POSTGRES_PASSWORD
+           value: "mypassword123"
+{{- if .Values.global.limitsEnabled }}
+         resources:
+           limits:
+             cpu: "1"
+             memory: "500Mi"
+           requests:
+             cpu: "1m"
+             memory: "128Mi"
+{{- end }}
+       - name: check-config-data
+         image: postgres:13-alpine
+         imagePullPolicy: {{ .Values.configinit.image.pullPolicy }}
+         command: ["sh", "-c",
+          "until psql postgresql://postgres:changeIt!@configdb:5432/onesaitplatform_config -c 'select count(*) from app_user';
+          do echo waiting for database to populate; sleep 10; done;"]
+         env:
+         - name: POSTGRES_PASSWORD
+           value: "mypassword123"
+{{- if .Values.global.limitsEnabled }}
+         resources:
+           limits:
+             cpu: "1"
+             memory: "500Mi"
+           requests:
+             cpu: "1m"
+             memory: "128Mi"
+{{- end }}
+{{- end }}
+{{- if .Values.global.sideCarContainersEnabled }}
+{{- if .Values.global.localStorageEnabled }}
+       - name: volume-mount-logs
+         image: busybox
+         command: ["sh", "-c", "chmod 777 /var/log/platform-logs"]
+         volumeMounts:
+         - name: logs
+           mountPath: /var/log/platform-logs
+         resources:
+           limits:
+             cpu: "1"
+             memory: "500Mi"
+           requests:
+             cpu: "1m"
+             memory: "128Mi"
+{{- end }}
+{{- if .Values.global.webProjectsSharedPvc }}
+       - name: volume-mount-webprojects
+         image: busybox
+         command: ["sh", "-c", "chmod 777 /opt/bitnami/nginx/webprojects"]
+         volumeMounts:
+         - name: controlpanel-data
+           mountPath: /opt/bitnami/nginx/webprojects
+         resources:
+           limits:
+             cpu: "1"
+             memory: "500Mi"
+           requests:
+             cpu: "1m"
+             memory: "128Mi"
+{{- end }}
 {{- end }}
       restartPolicy: Always
       volumes:
@@ -185,4 +311,14 @@ spec:
       - name: logs
         persistentVolumeClaim:
           claimName: logs-pvc
+{{- end }}
+{{- if .Values.global.gcpFilesEnabled }} 
+      - name: gcp
+        secret:
+          secretName: gcp-credentials
+{{- end }}
+{{- if .Values.global.prestoEnabled }}
+      - name: presto-catalog
+        persistentVolumeClaim:
+          claimName: presto-catalog-pvc
 {{- end }}

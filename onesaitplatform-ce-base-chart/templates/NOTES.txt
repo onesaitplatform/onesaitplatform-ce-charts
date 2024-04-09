@@ -6,3 +6,26 @@ To learn more about the release, try:
 
   $ helm status {{ .Release.Name }}
   $ helm get all {{ .Release.Name }}
+
+
+######################### IMPORTANT FOR DEPLOYMENTS ON AWS CLOUD PROVIDER!!
+##  How to get arn certificate with aws cli to set on Ingress configuration
+###########################################################################
+
+- First, you need to get certificate list:
+
+```
+aws acm list-certificates --region eu-west-1
+```
+
+- Then, you can get arn certificate
+
+```
+get CertificateArn and include it on ingress-aws alb.ingress.kubernetes.io/certificate-arn annotation
+```
+
+- Finally, you can set on values before deploying the chart:
+
+```
+global.certificateAwsArn=arn:aws:acm:eu-west-1:066185432217:certificate/65e39745-b182-4f9a-971d-dcaf4f5d21bf
+```

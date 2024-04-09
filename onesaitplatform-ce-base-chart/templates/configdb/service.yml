@@ -1,8 +1,9 @@
+{{- if and (not .Values.global.externalDatabase) }}
 apiVersion: v1
 kind: Service
 metadata:
   name: {{ include "onesait-platform.configdb.name" . }}
-  namespace: {{ .Release.Namespace }}  
+  namespace: {{ .Release.Namespace }}
   labels:
     run: {{ include "onesait-platform.configdb.name" . }}
     k8s-app: {{ include "onesait-platform.configdb.name" . }}
@@ -15,3 +16,4 @@ spec:
     app: {{ include "onesait-platform.configdb.name" . }}
   type: {{ .Values.configdb.service.type }}
   sessionAffinity: None
+{{ end }}

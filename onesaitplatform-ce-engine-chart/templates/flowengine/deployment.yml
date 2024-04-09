@@ -1,0 +1,159 @@
+{{- if .Values.deployment.selector.flowengine }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "onesait-platform.flowengine.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "onesait-platform.flowengine.name" . }}
+    group: {{ .Values.global.groupName }}
+spec:
+  replicas: {{ .Values.global.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "onesait-platform.flowengine.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "onesait-platform.flowengine.name" . }}
+    spec:
+{{- if .Values.global.affinityNodeRules }}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - {{ include "onesait-platform.flowengine.name" . }}
+            topologyKey: {{ .Values.global.nodeKey }}
+{{ end }}
+{{- if .Values.global.setNodesOnDeployments }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: {{ .Values.global.nodeKey }}
+                operator: In
+                values:
+                {{- range .Values.global.workerNodes }}
+                - {{ .node }}
+                {{- end }}
+
+{{ end }}
+      containers:
+      - name: {{ include "onesait-platform.flowengine.name" . }}
+        image: "{{ .Values.flowengine.image.repository }}:{{ .Values.global.image.tag }}"
+        imagePullPolicy: {{ .Values.flowengine.image.pullPolicy }}
+{{- if .Values.global.healthChecksEnabled }}
+        readinessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 100
+          periodSeconds: 5
+          successThreshold: 2
+          tcpSocket:
+            port: {{ .Values.flowengine.service.flowengine.port }}
+          timeoutSeconds: 2
+{{- end }}
+        env:
+        - name: HZ_SERVICE_DISCOVERY_STRATEGY
+          value: "{{ .Values.global.env.hzServiceDiscoveryStrategy }}"
+        - name: HZ_ZOOKEEPER_URL
+          value: "{{ .Values.global.env.hzZookeeperUrl }}"
+        - name: AUDITGLOBALNOTIFY
+          value: "{{ .Values.global.env.auditGlobalNotify }}"
+        - name: SERVERNAME
+          value: "{{ .Values.global.env.serverName }}"
+        - name: HTTP_LOG_LEVEL
+          value: "{{ .Values.global.env.httpLogLevel }}"
+        - name: CONFIGDBURL
+          value: "{{ .Values.global.env.configDbUrl }}"
+        - name: CONFIGDBMASTERURL
+          value: "{{ .Values.global.env.configDbMasterUrl }}"
+        - name: CONFIGDBUSER
+          value: "{{ .Values.global.env.configDbUser }}"
+        - name: CONFIGDBPASS
+          valueFrom:
+            secretKeyRef:
+              key: CONFIGDBPASS
+              name: onesait-secret
+        - name: CONFIGDB_DRIVER
+          value: "{{ .Values.global.env.configDbDriver }}"
+        - name: CONFIGDB_DIALECT
+          value: "{{ .Values.global.env.configDbDialect }}"              
+        - name: REALTIMEDBSERVERS
+          value: "{{ .Values.global.env.realtimeDbServers }}"
+        - name: REALTIMEDBUSER
+          value: "{{ .Values.global.env.realtimeDbUser }}"
+        - name: REALTIMEDBPASS
+          valueFrom:
+            secretKeyRef:
+              key: REALTIMEDBPASS
+              name: onesait-secret
+        - name: REALTIMEDBWRITECONCERN
+          value: "{{ .Values.global.env.realtimeDbWriteConcern }}"
+        - name: ONESAIT_PROPERTIES
+          value: "{{ .Values.flowengine.env.onesaitProperties }}"
+        ports:
+        - containerPort: {{ .Values.flowengine.service.flowengine.port }}
+          name: 20100tcp20100
+          protocol: TCP
+        - containerPort: {{ .Values.flowengine.service.nodered.port }}
+          name: 5050tcp5050
+          protocol: TCP
+        - containerPort: {{ .Values.flowengine.service.internalport.port }}
+          name: 10000tcp10000
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /tmp
+          name: flowengine-data
+{{- if (not .Values.global.localStorageEnabled) }}
+          subPath: flowengine
+{{- end }}
+{{- if .Values.global.localStorageEnabled }}
+        - mountPath: /var/log/platform-logs
+          name: logs
+{{- end }}
+{{- if .Values.global.limitsEnabled }}
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "2Gi"
+          requests:
+            cpu: "1m"
+            memory: "1Mi"
+{{- end }}
+      dnsPolicy: ClusterFirst
+{{- if .Values.global.sideCarContainersEnabled }}
+      initContainers:
+       - name: volume-mount
+         image: busybox
+         command: ["sh", "-c", "chmod 777 /tmp"]
+         volumeMounts:
+         - name: flowengine-data
+           mountPath: /tmp
+         resources:
+           limits:
+             cpu: "1"
+             memory: "500Mi"
+           requests:
+             cpu: "1m"
+             memory: "1Mi"
+{{- end }}
+      restartPolicy: Always
+{{- if .Values.global.flowengineSecurityContext }}
+      securityContext:
+        fsGroup: 433
+{{ end }}
+      volumes:
+      - name: flowengine-data
+        persistentVolumeClaim:
+          claimName: flowengine-pvc
+{{- if .Values.global.localStorageEnabled }}
+      - name: logs
+        persistentVolumeClaim:
+          claimName: logs-pvc
+{{- end }}
+{{- end }}

@@ -1,16 +1,21 @@
+{{- if and (not .Values.global.externalDatabase) (not .Values.global.skipPersistenceDeployment) }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: configdb-pvc
   namespace: {{ .Release.Namespace }}
+{{- if .Values.global.keepPersistence }}
+{{- template "annotations.keepresources" }}
+{{- end }}
 spec:
   accessModes:
   - ReadWriteOnce
 {{- if .Values.global.localStorageEnabled }}
   volumeMode: Filesystem
-  volumeName: configdb-pv-volume
+  volumeName: {{ .Values.persistence.pvs.configdb }}
 {{- end }}
   storageClassName: {{ .Values.global.storageClassName }}
   resources:
     requests:
       storage: {{ .Values.configdb.storage.size }}
+{{ end }}

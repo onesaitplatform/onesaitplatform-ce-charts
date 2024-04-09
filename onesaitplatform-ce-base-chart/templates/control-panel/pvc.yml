@@ -1,16 +1,21 @@
+{{- if (not .Values.global.skipPersistenceDeployment) }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: controlpanel-pvc
   namespace: {{ .Release.Namespace }}
+{{- if .Values.global.keepPersistence }}
+{{- template "annotations.keepresources" }}
+{{- end }}
 spec:
   accessModes:
   - {{ .Values.controlpanel.storage.accessMode }}
 {{- if .Values.global.localStorageEnabled }}
   volumeMode: Filesystem
-  volumeName: controlpanel-pv-volume
+  volumeName: {{ .Values.persistence.pvs.controlpanel }}
 {{- end }}
   storageClassName: {{ .Values.global.storageClassName }}
   resources:
     requests:
       storage: {{ .Values.controlpanel.storage.size }}
+{{- end }}

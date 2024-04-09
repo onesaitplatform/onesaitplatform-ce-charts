@@ -6,16 +6,8 @@
 {{- default .Chart.Name .Values.configdb.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-{{- define "onesait-platform.schedulerdb.name" -}}
-{{- default .Chart.Name .Values.schedulerdb.nameOverride | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-
 {{- define "onesait-platform.realtimedb.name" -}}
 {{- default .Chart.Name .Values.realtimedb.nameOverride | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-
-{{- define "onesait-platform.quasar.name" -}}
-{{- default .Chart.Name .Values.quasar.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{- define "onesait-platform.zookeeper.name" -}}
@@ -53,3 +45,9 @@
 {{- define "onesait-platform.ingress.name" -}}
 {{- default .Chart.Name .Values.loadbalanceringress.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
+
+
+{{- define "annotations.keepresources" }}
+  annotations:
+    "helm.sh/resource-policy": keep
+{{- end }}

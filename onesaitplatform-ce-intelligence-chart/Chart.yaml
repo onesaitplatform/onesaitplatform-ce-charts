@@ -1,0 +1,18 @@
+apiVersion: v2
+name: onesaitplatform-ce-intelligence-chart
+description: Onesait Platform CE Intelligence chart for k8s
+home: https://github.com/onesaitplatform/onesaitplatform-ce-charts
+type: application
+version: "5.2.0-ce"
+appVersion: "5.2.0-ce"
+keywords:
+  - Minsait
+  - Onesait platform
+  - Kubernetes
+  - IoT
+  - Analytics
+maintainers:
+  - name: Onesait Platform
+    email: support@onesaitplatform.com
+    url: lab.onesaitplatform.com
+icon: https://raw.githubusercontent.com/onesaitplatform/onesaitplatform-ce-charts/2.1.0-ce/images/onesaitplatform.png

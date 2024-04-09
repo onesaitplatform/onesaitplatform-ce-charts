@@ -26,7 +26,7 @@ spec:
                 operator: In
                 values:
                 - {{ include "onesait-platform.zookeeper.name" . }}
-            topologyKey: "kubernetes.io/hostname"
+            topologyKey: {{ .Values.global.nodeKey }}
 {{ end }}
 {{- if .Values.global.setNodesOnDeployments }}
       affinity:
@@ -34,7 +34,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: kubernetes.io/hostname
+              - key: {{ .Values.global.nodeKey }}
                 operator: In
                 values:
                 {{- range .Values.global.workerNodes }}
@@ -49,7 +49,7 @@ spec:
 {{- if .Values.global.healthChecksEnabled }}
         readinessProbe:
           failureThreshold: 3
-          initialDelaySeconds: 100
+          initialDelaySeconds: 20
           periodSeconds: 5
           successThreshold: 2
           tcpSocket:
@@ -63,6 +63,11 @@ spec:
         - containerPort: {{ .Values.zookeeper.service.targetPort }}
           name: 2181tcp2181
           protocol: TCP
+        volumeMounts:
+        - mountPath: /var/lib/zookeeper/log
+          name: zookeeper-logs
+        - mountPath: /var/lib/zookeeper/data
+          name: zookeeper-data
 {{- if .Values.global.limitsEnabled }}
         resources:
           limits:
@@ -73,4 +78,40 @@ spec:
             memory: "1Mi"
 {{- end }}
       dnsPolicy: ClusterFirst
+{{- if .Values.global.sideCarContainersEnabled }}
+      initContainers:
+       - name: volume-mount-logs
+         image: busybox
+         command: ["sh", "-c", "chmod 777 /var/lib/zookeeper/log"]
+         volumeMounts:
+         - name: zookeeper-logs
+           mountPath: /var/lib/zookeeper/log
+         resources:
+           limits:
+             cpu: "1"
+             memory: "500Mi"
+           requests:
+             cpu: "1m"
+             memory: "1Mi"
+       - name: volume-mount-data
+         image: busybox
+         command: ["sh", "-c", "chmod 777 /var/lib/zookeeper/data"]
+         volumeMounts:
+         - name: zookeeper-data
+           mountPath: /var/lib/zookeeper/data
+         resources:
+           limits:
+             cpu: "1"
+             memory: "500Mi"
+           requests:
+             cpu: "1m"
+             memory: "1Mi"
+{{- end }}   
       restartPolicy: Always
+      volumes:
+      - name: zookeeper-logs
+        persistentVolumeClaim:
+          claimName: zookeeperlogs-pvc
+      - name: zookeeper-data
+        persistentVolumeClaim:
+          claimName: zookeeperdata-pvc

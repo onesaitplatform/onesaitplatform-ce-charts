@@ -1,0 +1,29 @@
+{{- if .Values.deployment.selector.flowengine }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "onesait-platform.flowengine.name" . }}
+  namespace: {{ .Release.Namespace }}  
+  labels:
+    run: {{ include "onesait-platform.flowengine.name" . }}
+    k8s-app: {{ include "onesait-platform.flowengine.name" . }}
+    app: {{ include "onesait-platform.flowengine.name" . }}
+spec:
+  ports:
+  - name: flowengine
+    port: {{ .Values.flowengine.service.flowengine.port }}
+    protocol: TCP
+    targetPort: {{ .Values.flowengine.service.flowengine.targetPort }}
+  - name: nodered
+    port: {{ .Values.flowengine.service.nodered.port }}
+    protocol: TCP
+    targetPort: {{ .Values.flowengine.service.nodered.targetPort }}
+  - name: internalport
+    port: {{ .Values.flowengine.service.internalport.port }}
+    protocol: TCP
+    targetPort: {{ .Values.flowengine.service.internalport.targetPort }}
+  selector:
+    app: {{ include "onesait-platform.flowengine.name" . }}
+  type: {{ .Values.flowengine.service.type }}
+  sessionAffinity: None
+{{- end }}

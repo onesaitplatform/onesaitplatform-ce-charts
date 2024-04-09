@@ -1,14 +1,17 @@
-{{- if .Values.global.localStorageEnabled }}
+{{- if and .Values.global.localStorageEnabled (not .Values.global.skipPersistenceDeployment) }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: logs-pvc
   namespace: {{ .Release.Namespace }}
+{{- if .Values.global.keepPersistence }}
+{{- template "annotations.keepresources" }}
+{{- end }}    
 spec:
   accessModes:
   - ReadWriteMany
   volumeMode: Filesystem
-  volumeName: logs-pv-volume
+  volumeName: {{ .Values.persistence.pvs.logs }}
   storageClassName: {{ .Values.global.logStorageClassName }}
   resources:
     requests:

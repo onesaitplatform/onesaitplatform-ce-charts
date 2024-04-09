@@ -1,0 +1,21 @@
+{{- if and (not .Values.global.skipPersistenceDeployment) .Values.global.prestoEnabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: presto-catalog-pvc
+  namespace: {{ .Release.Namespace }}
+{{- if .Values.global.keepPersistence }}
+{{- template "annotations.keepresources" }}
+{{- end }}
+spec:
+  accessModes:
+  - ReadWriteOnce
+{{- if .Values.global.localStorageEnabled }}
+  volumeMode: Filesystem
+  volumeName: {{ .Values.persistence.pvs.presto }}
+{{- end }}
+  storageClassName: {{ .Values.global.storageClassName }}
+  resources:
+    requests:
+      storage: {{ .Values.controlpanel.storage.prestoSize }}
+{{- end }}
