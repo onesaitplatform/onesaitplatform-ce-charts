@@ -23,7 +23,7 @@ global:
     - node: worker
     - node: worker2
   image:
-    tag: 5.2.0-ce
+    tag: 5.3.0-ce
   env:
     serverName: "localhost"
     configDbMasterUrl: "jdbc:mysql://configdb:3306/onesaitplatform_master_config?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&useSSL=false&autoReconnect=true"

@@ -35,5 +35,5 @@ helm install onesaitplatform/onesaitplatform-ce-base-chart \
                -f base-values.yml \
                --namespace <your_k8s_namespace> \
                --generate-name \
-               --version 5.2.0-ce
+               --version 5.3.0-ce
 ```

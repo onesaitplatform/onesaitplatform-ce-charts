@@ -34,7 +34,7 @@ helm install onesaitplatform/onesaitplatform-ce-intelligence-chart \
                -f intelligence-values.yml \
                --namespace <your_k8s_namespace> \
                --generate-name \
-               --version 5.2.0-ce
+               --version 5.3.0-ce
 ```
 - In order to access the modules included in intelligence chart through loadbalancer, you should patch the loadbalancer deployment. This action can be done with the kubectl command:
 
