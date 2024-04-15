@@ -6,7 +6,7 @@ global:
   logStorageClassName: standard-csi
   localStorageEnabled: false
   image:
-    tag: 5.2.0-ce
+    tag: 5.3.0-ce
   env:
     serverName: "example.onesaitplatform.com"
     kafkaEnabled: "false"

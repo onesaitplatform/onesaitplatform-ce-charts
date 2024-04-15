@@ -35,7 +35,7 @@ helm install onesaitplatform/onesaitplatform-ce-base-chart \
                -f base-values.yml \
                --namespace <your_k8s_namespace> \
                --generate-name \
-               --version 5.2.0-ce
+               --version 5.3.0-ce
 ```
 
 - In case you want to deploy engine/intelligence charts, the following instructions must be executed:
@@ -45,7 +45,7 @@ helm install onesaitplatform/onesaitplatform-ce-engine-chart \
                -f engine-values.yml \
                --namespace <your_k8s_namespace> \
                --generate-name \
-               --version 5.2.0-ce
+               --version 5.3.0-ce
 ```
 
 ```
@@ -53,7 +53,7 @@ helm install onesaitplatform/onesaitplatform-ce-intelligence-chart \
                -f intelligence-values.yml \
                --namespace <your_k8s_namespace> \
                --generate-name \
-               --version 5.2.0-ce
+               --version 5.3.0-ce
 ```
 
 - The engine/intelligence values can be overwritten with the following:
