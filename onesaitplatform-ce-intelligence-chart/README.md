@@ -25,6 +25,7 @@ global:
   localStorageEnabled: false
   env:
     serverName: "example.onesaitplatform.com"
+    avdIdentityMngAPIKey: "d4d173323edb49cb8df923182863fda5"
 ```
 
 - Helm installation command:
@@ -34,7 +35,7 @@ helm install onesaitplatform/onesaitplatform-ce-intelligence-chart \
                -f intelligence-values.yml \
                --namespace <your_k8s_namespace> \
                --generate-name \
-               --version 5.3.0-ce
+               --version 6.0.0-ce
 ```
 - In order to access the modules included in intelligence chart through loadbalancer, you should patch the loadbalancer deployment. This action can be done with the kubectl command:
 

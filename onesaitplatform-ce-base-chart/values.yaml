@@ -35,7 +35,7 @@ global:
   externalDatabase: false
   affinityNodeRules: false
   setNodesOnDeployments: false
-  hostAliasEnabled: true
+  hostAliasEnabled: false
   nodeKey: kubernetes.io/hostname
   workerNodes:
     - node: worker
@@ -167,8 +167,8 @@ kafka:
 elasticdb:
   nameOverride: elasticdb
   image:
-    repository: onesaitplatform/elasticdb
-    tag: 7.9.3
+    repository: onesaitplatform/auditdb
+    tag: opensearch-2.5.0
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP

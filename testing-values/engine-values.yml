@@ -9,3 +9,4 @@ global:
   env:
     serverName: "example.onesaitplatform.com"
     kafkaEnabled: "false"
+    avdIdentityMngAPIKey: "d4d173323edb49cb8df923182863fda5"

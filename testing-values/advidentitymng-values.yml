@@ -1,0 +1,6 @@
+# Global Variables
+global:
+  env:
+    serverName: "example.onesaitplatform.com"
+    platformAdminAPIKey: "0dfd700d66884fa9b7a1c2d1ddcc901d" 
+    administratorAPIKey: "d4d173323edb49cb8df923182863fda5"
