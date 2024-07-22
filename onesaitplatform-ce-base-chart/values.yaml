@@ -75,6 +75,19 @@ global:
     httpLogLevel: "INFO"
     opendataPath: "opendata"
 
+persistence:
+    pvs:
+      configdb: configdb-pv-volume
+      realtimedb: realtimedb-pv-volume
+      elasticdb: elasticdb-pv-volume
+      logs: logs-pv-volume
+      kafka: kafka-pv-volume
+      kafkalogs: kafka-logs-pv-volume
+      zookeeperlogs: zookeeper-pv-volume-logs
+      zookeeperdata: zookeeper-pv-volume-data
+      controlpanel: controlpanel-pv-volume
+      loadbalancer: loadbalancer-pv-volume
+
 # Variables for configdb deployment/service/storage
 configdb:
   nameOverride: configdb
