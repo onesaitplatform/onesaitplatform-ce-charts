@@ -77,6 +77,20 @@ spec:
             memory: "{{ .Values.advidentitymanagermng.requests.memory }}"
 {{- end }}
       dnsPolicy: ClusterFirst
+      initContainers:
+       - name: check-keycloak-status
+         image: yauritux/busybox-curl
+         imagePullPolicy: IfNotPresent
+         command: ['sh', '-c', 'until curl http://keycloak:8080/auth --connect-timeout 5; do echo waiting for keycloak; sleep 15; done;']
+{{- if .Values.global.limitsEnabled }}
+         resources:
+           limits:
+             cpu: "1"
+             memory: "500Mi"
+           requests:
+             cpu: "1m"
+             memory: "1Mi"
+{{- end }}
 {{- if .Values.global.registryAuthEnabled }}
       imagePullSecrets:
       - name: platform-registry
