@@ -1,0 +1,16 @@
+{{- if not .Values.haValues.enabled }}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: advim-config
+  namespace: {{ .Release.Namespace }}
+data:
+  advim-nginx.conf: >
+        location /auth {
+            proxy_set_header X-Forwarded-Proto https;
+            proxy_set_header X-Forwarded-For $remote_addr;
+            proxy_set_header X-Forwarded-Port 443;
+            proxy_set_header Host $host;
+            proxy_pass http://keycloak:8080/auth;
+        }
+{{- end }}

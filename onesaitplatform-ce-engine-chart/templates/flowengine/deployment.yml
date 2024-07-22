@@ -119,11 +119,11 @@ spec:
 {{- if .Values.global.limitsEnabled }}
         resources:
           limits:
-            cpu: "500m"
-            memory: "2Gi"
+            cpu: "{{ .Values.flowengine.limits.cpu }}"
+            memory: "{{ .Values.flowengine.limits.memory }}"
           requests:
-            cpu: "1m"
-            memory: "1Mi"
+            cpu: "{{ .Values.flowengine.requests.cpu }}"
+            memory: "{{ .Values.flowengine.requests.memory }}"
 {{- end }}
       dnsPolicy: ClusterFirst
 {{- if .Values.global.sideCarContainersEnabled }}

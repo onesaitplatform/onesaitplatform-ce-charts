@@ -73,6 +73,8 @@ spec:
           value: "{{ .Values.streamsets.env.opStreamsetsXmx }}"
         - name: SDC_JAVA_OPTS
           value: "{{ .Values.streamsets.env.sdcJavaOpts }}"
+        - name: SDC_CONF_PACKAGE_MANAGER_REPOSITORY_LINKS
+          value: "{{ .Values.streamsets.env.sdcRepositoryURL }}"
         ports:
         - containerPort: {{ .Values.streamsets.service.targetPort }}
           name: 18630tcp18630
@@ -87,11 +89,11 @@ spec:
 {{- if .Values.global.limitsEnabled }}
         resources:
           limits:
-            cpu: "500m"
-            memory: "2Gi"
+            cpu: "{{ .Values.streamsets.limits.cpu }}"
+            memory: "{{ .Values.streamsets.limits.memory }}"
           requests:
-            cpu: "1m"
-            memory: "1Mi"
+            cpu: "{{ .Values.streamsets.requests.cpu }}"
+            memory: "{{ .Values.streamsets.requests.memory }}"
 {{- end }}
       dnsPolicy: ClusterFirst
 {{- if .Values.global.sideCarContainersEnabled }}
@@ -111,7 +113,7 @@ spec:
              memory: "1Mi"
        - name: volume-mount-libs
          image: busybox
-         command: ["sh", "-c", "chmod 777 /opt/streamsets-datacollector-3.18.1/streamsets-libs && rm -rf /opt/streamsets-datacollector-3.18.1/streamsets-libs/lost+found"]
+         command: ["sh", "-c", "chmod 777 /opt/streamsets-datacollector-3.23.1/streamsets-libs && rm -rf /opt/streamsets-datacollector-3.23.1/streamsets-libs/lost+found"]
          volumeMounts:
          - name: streamsets-libs
            mountPath: /opt/streamsets-datacollector-{{ .Values.streamsets.version }}/streamsets-libs
@@ -124,7 +126,7 @@ spec:
              memory: "1Mi"
        - name: volume-mount-libs-extras
          image: busybox
-         command: ["sh", "-c", "chmod 777 /opt/streamsets-datacollector-3.18.1/streamsets-libs-extras && rm -rf /opt/streamsets-datacollector-3.18.1/streamsets-libs-extras/lost+found"]
+         command: ["sh", "-c", "chmod 777 /opt/streamsets-datacollector-3.23.1/streamsets-libs-extras && rm -rf /opt/streamsets-datacollector-3.23.1/streamsets-libs-extras/lost+found"]
          volumeMounts:
          - name: streamsets-libs-extra
            mountPath: /opt/streamsets-datacollector-{{ .Values.streamsets.version }}/streamsets-libs-extras

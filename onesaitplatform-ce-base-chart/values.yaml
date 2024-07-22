@@ -35,14 +35,16 @@ global:
   externalDatabase: false
   affinityNodeRules: false
   setNodesOnDeployments: false
+  hostAliasEnabled: true
   nodeKey: kubernetes.io/hostname
   workerNodes:
     - node: worker
     - node: worker2
   image:
-    tag: 5.3.0-ce
+    tag: 6.0.0-ce
   env:
     serverName: "localhost"
+    ipHost: "127.0.0.1"
     configDbMasterUrl: "jdbc:mysql://configdb:3306/onesaitplatform_master_config?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&useSSL=false&autoReconnect=true"
     configDbUrl: "jdbc:mysql://configdb:3306/onesaitplatform_config?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&useSSL=true&autoReconnect=true&nullDatabaseMeansCurrent=true"
     schedulerDbUrl: "jdbc:mysql://configdb:3306/onesaitplatform_scheduler?useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&useSSL=false&autoReconnect=true"
@@ -65,6 +67,9 @@ global:
     hzServiceDiscoveryStrategy: zookeeper
     hzZookeeperUrl: zookeeper:2181
     ingressHostName: example.onesaitplatform.com
+    avdIdentityMngEnabled: "true"
+    avdIdentityMngAPIKey: "0dfd700d66884fa9b7a1c2d1ddcc901d"
+    oauthSSOEnabled: "true"
     auditGlobalNotify: "false"
     elasticEnabled: false
     httpLogLevel: "INFO"
@@ -89,7 +94,7 @@ realtimedb:
   nameOverride: realtimedb
   image:
     repository: onesaitplatform/realtimedb
-    tag: "5.0"
+    tag: "6.0"
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
@@ -100,28 +105,12 @@ realtimedb:
   customWiredTiger: false
   wiredTigerSizeGB: 1 
 
-# Variables for quasar deployment/service
-quasar:
-  nameOverride: quasar
-  image:
-    repository: onesaitplatform/quasar
-    tag: 14
-    pullPolicy: IfNotPresent
-  service:
-    type: ClusterIP
-    port: 10800
-    targetPort: 10800
-  env:
-    realtimeDbServers: realtimedb:27017
-    authDb: "admin"
-    authParams: "platformadmin:0pen-platf0rm-2018!@"
-
 # Variables for zookeeper deployment/service
 zookeeper:
   nameOverride: zookeeper
   image:
     repository: onesaitplatform/zookeeper-secured
-    tag: cp-6.1.1
+    tag: cp-7.4.0
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
@@ -138,7 +127,7 @@ kafka:
   nameOverride: kafkaservice
   image:
     repository: onesaitplatform/kafka-secured
-    tag: cp-6.1.1
+    tag: cp-7.4.0
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
@@ -217,7 +206,7 @@ controlpanel:
   env:
     capthaOn: "false"
     ksqlEnable: "false"
-    streamsetsSdcVersion: "3.18.1"
+    streamsetsSdcVersion: "3.23.1"
     tfaEnabled: "false"
     authProvider: "configdb"
     ldapAdminDn: ""

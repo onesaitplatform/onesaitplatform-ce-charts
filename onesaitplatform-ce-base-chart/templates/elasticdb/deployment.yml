@@ -54,7 +54,7 @@ spec:
           name: 9300tcp93002
           protocol: TCP
         volumeMounts:
-        - mountPath: /usr/share/elasticsearch/data
+        - mountPath: /usr/share/opensearch/data
           name: elasticdb-data
 {{- if (not .Values.global.localStorageEnabled) }}
           subPath: elasticdb
@@ -73,10 +73,10 @@ spec:
       initContainers:
        - name: volume-mount
          image: busybox
-         command: ["sh", "-c", "chmod 777 /usr/share/elasticsearch/data"]
+         command: ["sh", "-c", "chmod 777 /usr/share/opensearch/data"]
          volumeMounts:
          - name: elasticdb-data
-           mountPath: /usr/share/elasticsearch/data
+           mountPath: /usr/share/opensearch/data
          resources:
            limits:
              cpu: "1"

@@ -60,6 +60,8 @@ spec:
         env:
         - name: ZEPPELIN_PORT
           value: "8080"
+        - name: USE_KEYCLOAK
+          value: "{{ .Values.global.env.oauthSSOEnabled }}"
         ports:
         - containerPort: {{ .Values.notebook.service.targetPort }}
           name: 8080tcp8080
@@ -83,11 +85,11 @@ spec:
 {{- if .Values.global.limitsEnabled }}
         resources:
           limits:
-            cpu: "1"
-            memory: "4Gi"
+            cpu: "{{ .Values.notebook.limits.cpu }}"
+            memory: "{{ .Values.notebook.limits.memory }}"
           requests:
-            cpu: "1m"
-            memory: "1Mi"
+            cpu: "{{ .Values.notebook.requests.cpu }}"
+            memory: "{{ .Values.notebook.requests.memory }}"
 {{- end }}
       dnsPolicy: ClusterFirst
 {{- if .Values.global.sideCarContainersEnabled }}

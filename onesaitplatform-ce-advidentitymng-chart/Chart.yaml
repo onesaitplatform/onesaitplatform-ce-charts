@@ -1,16 +1,16 @@
 apiVersion: v2
-name: onesaitplatform-ce-engine-chart
-description: Onesait Platform CE Engine chart for k8s
+name: onesaitplatform-ce-advidentitymng-chart
+description: Onesait Platform CE Advanced Identity Manager chart for k8s
 home: https://github.com/onesaitplatform/onesaitplatform-ce-charts
 type: application
 version: "6.0.0-ce"
-appVersion: "6.0.0-ce"
+appVersion: "21.1.1"
 keywords:
   - Minsait
   - Onesait platform
   - Kubernetes
   - IoT
-  - Analytics  
+  - Analytics
 maintainers:
   - name: Onesait Platform
     email: support@onesaitplatform.com

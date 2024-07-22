@@ -23,7 +23,7 @@ global:
     - node: worker
     - node: worker2
   image:
-    tag: 5.3.0-ce
+    tag: 6.0.0-ce
   env:
     serverName: "localhost"
     configDbMasterUrl: "jdbc:mysql://configdb:3306/onesaitplatform_master_config?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&useSSL=false&autoReconnect=true"
@@ -47,6 +47,9 @@ global:
     hzZookeeperUrl: zookeeper:2181
     auditGlobalNotify: "false"
     elasticEnabled: "false"
+    avdIdentityMngEnabled: "true"
+    avdIdentityMngAPIKey: "0dfd700d66884fa9b7a1c2d1ddcc901d"
+    oauthSSOEnabled: "true"
     httpLogLevel: "INFO"
 
 deployment:
@@ -55,7 +58,6 @@ deployment:
     iotbroker: true
     apimanager: true
     flowengine: true
-    oauthserver: true
     auditrouter: true
 
 persistence:
@@ -80,6 +82,12 @@ semanticinfbroker:
     opLogLevel: "INFO"
     queriesDefaultLimit: "2000"
     javaOpts:
+  limits:
+    cpu: "500m"
+    memory: "2Gi"
+  requests:
+    cpu: "1m"
+    memory: "1Mi"
 
 # Variables for IoT broker deployment/service
 iotbroker:
@@ -95,6 +103,12 @@ iotbroker:
     onesaitProperties:
     opLogLevel: "OFF"
     javaOpts:
+  limits:
+    cpu: "500m"
+    memory: "1.5Gi"
+  requests:
+    cpu: "1m"
+    memory: "1Mi"
 
 # Variables for API manager deployment/service
 apimanager:
@@ -108,6 +122,12 @@ apimanager:
     targetPort: 19100
   env:
     onesaitProperties:
+  limits:
+    cpu: "500m"
+    memory: "1.6Gi"
+  requests:
+    cpu: "1m"
+    memory: "1Mi"
 
 # Variables for flowengine deployment/service
 flowengine:
@@ -130,33 +150,13 @@ flowengine:
     onesaitProperties:
   storage:
     size: 5Gi
-
-# Variables for oauth server deployment/service
-oauthserver:
-  nameOverride: oauthservice
-  image:
-    repository: onesaitplatform/oauthserver
-    pullPolicy: IfNotPresent
-  service:
-    type: ClusterIP
-    port: 21000
-    targetPort: 21000
-  env:
-    authProvider: "configdb"
-    ldapAdminDn: ""
-    ldapAdminPassword: ""
-    ldapAdminWhitelist: "administrator,admin"
-    ldapAuthRegex: "(.*)"
-    ldapBaseDn: "OU=''"
-    ldapDefaultRole: "ROLE_USER"
-    ldapGroupWhitelist:
-    ldapIgnorePartialResult: "false"
-    ldapImportUsers: "true"
-    ldapRolesMemberAtt: ""
-    ldapUrl: ""
-    multitenancyEnabled: "false"
-    onesaitProperties:
-
+  limits:
+    cpu: "500m"
+    memory: "2Gi"
+  requests:
+    cpu: "1m"
+    memory: "1Mi"
+    
 auditrouter:
   nameOverride: auditrouter
   image:
@@ -173,3 +173,9 @@ auditrouter:
     notificationPoolSubscription: 50
     opLogLevel: "INFO"
     javaOpts:
+  limits:
+    cpu: "500m"
+    memory: "1.5Gi"
+  requests:
+    cpu: "1m"
+    memory: "1Mi"
