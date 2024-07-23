@@ -44,7 +44,7 @@ spec:
 {{ end }}
       containers:
       - name: {{ include "onesait-platform.advidentitymanagermng.name" . }}
-        image: "{{ .Values.global.registryUrl }}/{{ .Values.advidentitymanagermng.image.repository }}:{{ .Values.advidentitymanagermng.image.tag }}"
+        image: "{{ .Values.advidentitymanagermng.image.repository }}:{{ .Values.advidentitymanagermng.image.tag }}"
         imagePullPolicy: {{ .Values.advidentitymanagermng.image.pullPolicy }}
 {{- if .Values.global.healthChecksEnabled }}
         readinessProbe:

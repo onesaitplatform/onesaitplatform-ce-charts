@@ -128,6 +128,19 @@ spec:
       dnsPolicy: ClusterFirst
 {{- if .Values.global.sideCarContainersEnabled }}
       initContainers:
+       - name: check-cp-status
+         image: yauritux/busybox-curl
+         imagePullPolicy: IfNotPresent
+         command: ['sh', '-c', 'until curl http://controlpanelservice:18000/controlpanel --connect-timeout 5; do echo waiting for controlpanel; sleep 15; done;']
+{{- if .Values.global.limitsEnabled }}
+         resources:
+           limits:
+             cpu: "1"
+             memory: "500Mi"
+           requests:
+             cpu: "1m"
+             memory: "1Mi"
+{{- end }}
        - name: volume-mount
          image: busybox
          command: ["sh", "-c", "chmod 777 /tmp"]
