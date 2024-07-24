@@ -1,0 +1,15 @@
+Thank you for installing {{ .Chart.Name }}.
+
+Your release is named {{ .Release.Name }}.
+
+To learn more about the release, try:
+
+  $ helm status {{ .Release.Name }}
+  $ helm get all {{ .Release.Name }}
+
+  To update NGINX configuration manually you must execute this sentence:
+
+    kubectl patch deployment loadbalancer --patch "$(cat conf-files/nginx-config-volumes.yaml)" --namespace <namespace_name>
+
+IMPORTANT! This chart only works with Onesait Platform version 3.0.0 or greater
+IMPORTANT! If HA version is deployed, the image tag from keycloak StatefulSet has to be a non logs version

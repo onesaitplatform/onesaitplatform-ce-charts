@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "onesait-platform.advidentitymanagermng.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "onesait-platform.advidentitymanagermng.name" . }}
+    group: {{ .Values.global.groupName }}
+spec:
+  replicas: {{ .Values.global.replicaInitCount }}
+  selector:
+    matchLabels:
+      app: {{ include "onesait-platform.advidentitymanagermng.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "onesait-platform.advidentitymanagermng.name" . }}
+    spec:
+{{- if .Values.global.affinityNodeRules }}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - {{ include "onesait-platform.advidentitymanagermng.name" . }}
+            topologyKey: {{ .Values.global.nodeKey }}
+{{ end }}
+{{- if .Values.global.setNodesOnDeployments }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: {{ .Values.global.nodeKey }}
+                operator: In
+                values:
+                {{- range .Values.global.workerNodes }}
+                - {{ .node }}
+                {{- end }}
+
+{{ end }}
+      containers:
+      - name: {{ include "onesait-platform.advidentitymanagermng.name" . }}
+        image: "{{ .Values.advidentitymanagermng.image.repository }}:{{ .Values.advidentitymanagermng.image.tag }}"
+        imagePullPolicy: {{ .Values.advidentitymanagermng.image.pullPolicy }}
+{{- if .Values.global.healthChecksEnabled }}
+        readinessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 20
+          periodSeconds: 5
+          successThreshold: 2
+          tcpSocket:
+            port: {{ .Values.advidentitymanagermng.service.targetPort }}
+          timeoutSeconds: 2
+{{- end }}
+        env:
+        - name: SERVER_NAME
+          value: "{{ .Values.global.env.serverName }}"
+        - name: PLATFORM_ADMIN_APIKEY
+          value: "{{ .Values.global.env.platformAdminAPIKey }}"
+        - name: KEYCLOAK_PASSWORD
+          value: "{{ .Values.advidentitymanager.env.keycloakPassword }}"
+        ports:
+        - containerPort: {{ .Values.advidentitymanagermng.service.targetPort }}
+          name: 15500tcp155002
+          protocol: TCP
+{{- if .Values.global.limitsEnabled }}
+        resources:
+          limits:
+            cpu: "{{ .Values.advidentitymanagermng.limits.cpu }}"
+            memory: "{{ .Values.advidentitymanagermng.limits.memory }}"
+          requests:
+            cpu: "{{ .Values.advidentitymanagermng.requests.cpu }}"
+            memory: "{{ .Values.advidentitymanagermng.requests.memory }}"
+{{- end }}
+      dnsPolicy: ClusterFirst
+      initContainers:
+       - name: check-keycloak-status
+         image: yauritux/busybox-curl
+         imagePullPolicy: IfNotPresent
+         command: ['sh', '-c', 'until curl http://keycloak:8080/auth --connect-timeout 5; do echo waiting for keycloak; sleep 15; done;']
+{{- if .Values.global.limitsEnabled }}
+         resources:
+           limits:
+             cpu: "1"
+             memory: "500Mi"
+           requests:
+             cpu: "1m"
+             memory: "1Mi"
+{{- end }}
+{{- if .Values.global.registryAuthEnabled }}
+      imagePullSecrets:
+      - name: platform-registry
+{{- end }}      
+      restartPolicy: Always

@@ -7,13 +7,13 @@ metadata:
 data:
   nginx.conf: >
     server_names_hash_bucket_size 128;
-
     server {
         listen 9443;
         server_name _;
 
         include /opt/bitnami/nginx/conf/server_blocks/engine/*;
         include /opt/bitnami/nginx/conf/server_blocks/intelligence/*;
+        include /opt/bitnami/nginx/conf/server_blocks/im/*;
 
         add_header Strict-Transport-Security "max-age=31536000" always;
 
@@ -27,6 +27,10 @@ data:
 
         location ~ ^/(controlpanel/actuator*) {
              return 301 http://$host/controlpanel;
+        }
+        
+        location = /controlpanel/login {
+            return 301 http://$host/controlpanel;
         }
 
     location /controlpanel {

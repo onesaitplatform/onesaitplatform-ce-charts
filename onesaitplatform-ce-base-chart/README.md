@@ -23,8 +23,10 @@ global:
   storageClassProvisioned: false
   logStorageClassName: Azurefile
   localStorageEnabled: false
+  hostAliasEnabled: true
   env:
     serverName: "example.onesaitplatform.com"
+	ipHost: "134.40.42.23"
     ingressHostName: example.onesaitplatform.com
 ```
 
@@ -35,5 +37,5 @@ helm install onesaitplatform/onesaitplatform-ce-base-chart \
                -f base-values.yml \
                --namespace <your_k8s_namespace> \
                --generate-name \
-               --version 5.3.0-ce
+               --version 6.0.0-ce
 ```

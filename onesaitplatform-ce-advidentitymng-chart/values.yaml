@@ -1,0 +1,61 @@
+# Global Variables
+global:
+  groupName: onesait-platform
+  replicaCount: 1
+  limitsEnabled: true
+  healthChecksEnabled: true
+  affinityNodeRules: false
+  setNodesOnDeployments: false
+  nodeKey: kubernetes.io/hostname
+  workerNodes:
+    - node: worker
+    - node: worker2
+  env:
+    serverName: "localhost"
+    configDbMasterUrl: "jdbc:mariadb://configdb:3306/onesaitplatform_master_config?createDatabaseIfNotExist=true&useSSL=false&characterEncoding=UTF-8&serverTimezone=UTC&autoReconnect=true&useUnicode=true"
+    configDbUrl: "jdbc:mariadb://configdb:3306/onesaitplatform_config?createDatabaseIfNotExist=true&useSSL=false&characterEncoding=UTF-8&serverTimezone=UTC&autoReconnect=true&useUnicode=true"
+    platformAdminAPIKey: "0dfd700d66884fa9b7a1c2d1ddcc901d"
+    administratorAPIKey: "d4d173323edb49cb8df923182863fda5"
+
+# Variables for advanced identity manager deployment/service
+advidentitymanager:
+  nameOverride: keycloak
+  image:
+    repository: onesaitplatform/keycloak
+    pullPolicy: IfNotPresent
+    tag: 21-ce
+  service:
+    type: ClusterIP
+    port: 8080
+    targetPort: 8080
+  env:
+    dbUser: "root"
+    dbVendor: "mariadb"
+    jdbcUrl: "jdbc:mariadb://configdb:3306/keycloak?createDatabaseIfNotExist=true&useSSL=false&characterEncoding=UTF-8&serverTimezone=UTC&autoReconnect=true&useUnicode=true"
+    logLevel: "WARN"
+    javaOptsAppend: "-Dkeycloak.profile.feature.upload_scripts=enabled"
+    keycloakUser: "admin"
+    keycloakPassword: "admin"
+  limits:
+    cpu: "500m"
+    memory: "1.5Gi"
+  requests:
+    cpu: "1m"
+    memory: "1Mi"
+
+advidentitymanagermng:
+  nameOverride: keycloakmanager
+  image:
+    repository: onesaitplatform/keycloak-manager
+    pullPolicy: IfNotPresent
+    tag: 6-ce
+  service:
+    type: ClusterIP
+    port: 15500
+    targetPort: 15500
+  limits:
+    cpu: "500m"
+    memory: "1.5Gi"
+  requests:
+    cpu: "1m"
+    memory: "1Mi"

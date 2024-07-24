@@ -24,7 +24,7 @@ global:
     - node: worker
     - node: worker2
   image:
-    tag: 5.3.0-ce
+    tag: 6.0.0-ce
   env:
     serverName: "localhost"
     configDbMasterUrl: "jdbc:mysql://configdb:3306/onesaitplatform_master_config?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&useSSL=false&autoReconnect=true"
@@ -42,6 +42,9 @@ global:
     kafkaHost: kafkaservice
     hzServiceDiscoveryStrategy: zookeeper
     hzZookeeperUrl: zookeeper:2181
+    avdIdentityMngEnabled: "true"
+    avdIdentityMngAPIKey: "0dfd700d66884fa9b7a1c2d1ddcc901d"
+    oauthSSOEnabled: "true"
     httpLogLevel: "INFO"
     
 deployment:
@@ -62,12 +65,10 @@ persistence:
 # Variables for dataflow deployment/service/storage
 streamsets:
   nameOverride: streamsets
-  version: 3.18.1
+  version: 3.23.1
   image:
     repository: onesaitplatform/streamsets
-    tag:  4.0.0-318
-# Streamset version for Platform >= 3.0.0-jailbreak
-#   tag:  3.1.0-318
+    tag: 5.3.0-3231
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
@@ -78,11 +79,18 @@ streamsets:
     opStreamsetsSamplingPopulationSize: "50"
     opStreamsetsSamplingSampleSize: "1"
     opStreamsetsXms: "2048m"
-    opStreamsetsXmx: "2048m"
-    sdcJavaOpts: "-Dname=Streamsets-310-1 -Xmn1g -XX:-TieredCompilation -XX:ReservedCodeCacheSize=240m -XX:SurvivorRatio=8 -XX:-UseAdaptiveSizePolicy"
+    opStreamsetsXmx: "3072m"
+    sdcJavaOpts: "-Dname=Streamsets-323-1 -Xmn1g -XX:-TieredCompilation -XX:ReservedCodeCacheSize=240m -XX:SurvivorRatio=8 -XX:-UseAdaptiveSizePolicy"
+    sdcRepositoryURL: "https://dataflow-libraries.onesaitplatform.com/libs/"
   storage:
     dataSize: 10Gi
     libsSize: 10Gi
+  limits:
+    cpu: "1500m"
+    memory: "4Gi"
+  requests:
+    cpu: "1m"
+    memory: "1Mi"
 
 # Variables for dashboard deployment/service
 dashboard:
@@ -96,6 +104,12 @@ dashboard:
     targetPort: 18300
   env:
     onesaitProperties:
+  limits:
+    cpu: "500m"
+    memory: "1.5Gi"
+  requests:
+    cpu: "1m"
+    memory: "1Mi"
 
 # Variables for notebooks deployment/service/storage
 notebook:
@@ -112,3 +126,9 @@ notebook:
     dataSize: 10Gi
     confSize: 10Gi
     wksSize: 20Gi
+  limits:
+    cpu: "1"
+    memory: "4Gi"
+  requests:
+    cpu: "1m"
+    memory: "1Mi"

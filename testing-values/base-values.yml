@@ -5,9 +5,11 @@ global:
   storageClassProvisioned: false
   logStorageClassName: standard-csi
   localStorageEnabled: false
+  hostAliasEnabled: true
   image:
-    tag: 5.3.0-ce
+    tag: 6.0.0-ce
   env:
     serverName: "example.onesaitplatform.com"
+    ipHost: "172.25.5.4"
     kafkaEnabled: "false"
     ingressHostName: example.onesaitplatform.com

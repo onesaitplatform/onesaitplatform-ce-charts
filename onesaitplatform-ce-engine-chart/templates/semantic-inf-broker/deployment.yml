@@ -120,11 +120,11 @@ spec:
 {{- if .Values.global.limitsEnabled }}
         resources:
           limits:
-            cpu: "500m"
-            memory: "2Gi"
+            cpu: "{{ .Values.semanticinfbroker.limits.cpu }}"
+            memory: "{{ .Values.semanticinfbroker.limits.memory }}"
           requests:
-            cpu: "1m"
-            memory: "1Mi"
+            cpu: "{{ .Values.semanticinfbroker.requests.cpu }}"
+            memory: "{{ .Values.semanticinfbroker.requests.memory }}"
 {{- end }}
       dnsPolicy: ClusterFirst
       restartPolicy: Always

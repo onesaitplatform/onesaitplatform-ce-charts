@@ -114,11 +114,11 @@ spec:
 {{- if .Values.global.limitsEnabled }}
         resources:
           limits:
-            cpu: "500m"
-            memory: "1.5Gi"
+            cpu: "{{ .Values.auditrouter.limits.cpu }}"
+            memory: "{{ .Values.auditrouter.limits.memory }}"
           requests:
-            cpu: "1m"
-            memory: "1Mi"
+            cpu: "{{ .Values.auditrouter.requests.cpu }}"
+            memory: "{{ .Values.auditrouter.requests.memory }}"
 {{- end }}
       dnsPolicy: ClusterFirst
       restartPolicy: Always

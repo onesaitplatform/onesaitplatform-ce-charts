@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "onesait-platform.advidentitymanager.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    run: {{ include "onesait-platform.advidentitymanager.name" . }}
+    k8s-app: {{ include "onesait-platform.advidentitymanager.name" . }}
+spec:
+  ports:
+  - port: {{ .Values.advidentitymanager.service.port }}
+    protocol: TCP
+    targetPort: {{ .Values.advidentitymanager.service.targetPort }}
+  selector:
+    app: {{ include "onesait-platform.advidentitymanager.name" . }}
+  type: {{ .Values.advidentitymanager.service.type }}
+  sessionAffinity: None
