@@ -20,11 +20,12 @@ global:
   affinityNodeRules: false
   nodeKey: kubernetes.io/hostname
   setNodesOnDeployments: false
+  streamsetsSsoEnabled: true
   workerNodes:
     - node: worker
     - node: worker2
   image:
-    tag: 6.0.0-ce
+    tag: 6.1.0-ce
   env:
     serverName: "localhost"
     configDbMasterUrl: "jdbc:mysql://configdb:3306/onesaitplatform_master_config?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&useSSL=false&autoReconnect=true"
@@ -50,6 +51,7 @@ global:
 deployment:
   selector:
     dashboard: true
+    dashboardexporter: true
     notebook: true
     streamsets: true
 
@@ -65,10 +67,10 @@ persistence:
 # Variables for dataflow deployment/service/storage
 streamsets:
   nameOverride: streamsets
-  version: 3.23.1
+  version: 3.23.3
   image:
     repository: onesaitplatform/streamsets
-    tag: 5.3.0-3231
+    tag: 6.1.0-3233
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
@@ -82,6 +84,12 @@ streamsets:
     opStreamsetsXmx: "3072m"
     sdcJavaOpts: "-Dname=Streamsets-323-1 -Xmn1g -XX:-TieredCompilation -XX:ReservedCodeCacheSize=240m -XX:SurvivorRatio=8 -XX:-UseAdaptiveSizePolicy"
     sdcRepositoryURL: "https://dataflow-libraries.onesaitplatform.com/libs/"
+    sdcConfRunnerThreadPoolSize: 123
+    sdcConfImEnabled: true
+    sdcConfAppSecurityPath: "controlpanel/streamsets/auth"
+    sdcConfOpImBaseUrl: "http://controlpanelservice:18000"
+    sdcConfOpControlPanelApiBase: "http://controlpanelservice:18000"
+    sdcConfOpAclGetUrl: "controlpanel/api/dataflows/pipelines"
   storage:
     dataSize: 10Gi
     libsSize: 10Gi
@@ -104,9 +112,28 @@ dashboard:
     targetPort: 18300
   env:
     onesaitProperties:
+    corsEnabled: false                      
   limits:
     cpu: "500m"
-    memory: "1.5Gi"
+    memory: "2Gi"
+
+# Variables for dashboard exporter deployment/service
+dashboardexporter:
+  nameOverride: dashboardexporterservice
+  image:
+    repository: onesaitplatform/dashboardexporter
+    tag: 6-ce
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 20300
+    targetPort: 20300
+  limits:
+    cpu: "500m"
+    memory: "1Gi"
+  requests:
+    cpu: "1m"
+    memory: "1Mi"
   requests:
     cpu: "1m"
     memory: "1Mi"
@@ -116,12 +143,14 @@ notebook:
   nameOverride: zeppelin
   image:
     repository: onesaitplatform/notebook
-    tag: 2.0.2-py3
+    tag: 6-ce
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
     port: 8080
     targetPort: 8080
+  env:
+    zeppelinRunMode: "local"              
   storage:
     dataSize: 10Gi
     confSize: 10Gi
