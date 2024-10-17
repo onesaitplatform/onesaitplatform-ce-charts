@@ -8,7 +8,7 @@ metadata:
     app: {{ include "onesait-platform.iotbroker.name" . }}
     group: {{ .Values.global.groupName }}
 spec:
-  replicas: {{ .Values.global.replicaCount }}
+  replicas: {{ .Values.iotbroker.replicas }}
   selector:
     matchLabels:
       app: {{ include "onesait-platform.iotbroker.name" . }}
@@ -79,7 +79,10 @@ spec:
         - name: CONFIGDBURL
           value: "{{ .Values.global.env.configDbUrl }}"
         - name: CONFIGDBUSER
-          value: "{{ .Values.global.env.configDbUser }}"
+          valueFrom:
+            secretKeyRef:
+              key: CONFIGDBUSER
+              name: onesait-secret
         - name: CONFIGDBPASS
           valueFrom:
             secretKeyRef:
@@ -90,7 +93,10 @@ spec:
         - name: CONFIGDB_DIALECT
           value: "{{ .Values.global.env.configDbDialect }}"              
         - name: REALTIMEDBUSER
-          value: "{{ .Values.global.env.realtimeDbUser }}"
+          valueFrom:
+            secretKeyRef:
+              key: REALTIMEDBUSER
+              name: onesait-secret
         - name: REALTIMEDBPASS
           valueFrom:
             secretKeyRef:
@@ -100,6 +106,10 @@ spec:
           value: "{{ .Values.iotbroker.env.onesaitProperties }}"
         - name: OP_LOG_LEVEL
           value: "{{ .Values.iotbroker.env.opLogLevel }}"
+{{- if not .Values.iotbroker.env.javaOptsDefault }}
+        - name: JAVA_OPTS
+          value: "{{ .Values.iotbroker.env.javaOpts }}"
+{{- end }}
         ports:
         - containerPort: {{ .Values.iotbroker.service.targetPort }}
           name: 19000tcp190002

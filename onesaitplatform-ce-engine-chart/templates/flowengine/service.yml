@@ -6,7 +6,7 @@ metadata:
   namespace: {{ .Release.Namespace }}  
   labels:
     run: {{ include "onesait-platform.flowengine.name" . }}
-    k8s-app: {{ include "onesait-platform.flowengine.name" . }}
+    k8s_app: {{ include "onesait-platform.flowengine.name" . }}
     app: {{ include "onesait-platform.flowengine.name" . }}
 spec:
   ports:

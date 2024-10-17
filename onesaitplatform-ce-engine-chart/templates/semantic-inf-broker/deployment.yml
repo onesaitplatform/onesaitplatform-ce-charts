@@ -8,7 +8,7 @@ metadata:
     app: {{ include "onesait-platform.semanticinfbroker.name" . }}
     group: {{ .Values.global.groupName }}
 spec:
-  replicas: {{ .Values.global.replicaCount }}
+  replicas: {{ .Values.semanticinfbroker.replicas }}
   selector:
     matchLabels:
       app: {{ include "onesait-platform.semanticinfbroker.name" . }}
@@ -69,7 +69,10 @@ spec:
         - name: CONFIGDBURL
           value: "{{ .Values.global.env.configDbUrl }}"
         - name: CONFIGDBUSER
-          value: "{{ .Values.global.env.configDbUser }}"
+          valueFrom:
+            secretKeyRef:
+              key: CONFIGDBUSER
+              name: onesait-secret
         - name: CONFIGDBPASS
           valueFrom:
             secretKeyRef:
@@ -80,7 +83,10 @@ spec:
         - name: CONFIGDB_DIALECT
           value: "{{ .Values.global.env.configDbDialect }}"              
         - name: REALTIMEDBUSER
-          value: "{{ .Values.global.env.realtimeDbUser }}"
+          valueFrom:
+            secretKeyRef:
+              key: REALTIMEDBUSER
+              name: onesait-secret
         - name: REALTIMEDBPASS
           valueFrom:
             secretKeyRef:
@@ -90,6 +96,8 @@ spec:
           value: "{{ .Values.global.env.kafkaEnabled }}"
         - name: KAFKAHOST
           value: "{{ .Values.global.env.kafkaHost }}"
+        - name: KAFKABROKERS
+          value: "{{ .Values.global.env.kafkaBrokers }}"
         - name: HTTP_LOG_LEVEL
           value: "{{ .Values.global.env.httpLogLevel }}"
         - name: NOTIFICATION_SUBSCRIPTION_ATTEMPS
@@ -108,6 +116,12 @@ spec:
           value: "{{ .Values.global.env.auditGlobalNotify }}"
         - name: ELASTICSEARCH_ENABLED
           value: "{{ .Values.global.env.elasticEnabled }}"
+        - name: OPENSEARCH_ENABLED
+          value: "{{ .Values.global.env.opensearchEnabled }}"
+{{- if not .Values.semanticinfbroker.env.javaOptsDefault }}
+        - name: JAVA_OPTS
+          value: "{{ .Values.semanticinfbroker.env.javaOpts }}"
+{{- end }}
         ports:
         - containerPort: {{ .Values.semanticinfbroker.service.targetPort }}
           name: 20000tcp200002

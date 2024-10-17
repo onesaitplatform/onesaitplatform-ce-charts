@@ -6,7 +6,7 @@ metadata:
   namespace: {{ .Release.Namespace }}  
   labels:
     run: {{ include "onesait-platform.semanticinfbroker.name" . }}
-    k8s-app: {{ include "onesait-platform.semanticinfbroker.name" . }}
+    k8s_app: {{ include "onesait-platform.semanticinfbroker.name" . }}
 spec:
   ports:
   - port: {{ .Values.semanticinfbroker.service.port }}

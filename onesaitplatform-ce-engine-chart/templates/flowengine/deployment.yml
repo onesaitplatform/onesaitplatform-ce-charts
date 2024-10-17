@@ -73,7 +73,10 @@ spec:
         - name: CONFIGDBMASTERURL
           value: "{{ .Values.global.env.configDbMasterUrl }}"
         - name: CONFIGDBUSER
-          value: "{{ .Values.global.env.configDbUser }}"
+          valueFrom:
+            secretKeyRef:
+              key: CONFIGDBUSER
+              name: onesait-secret
         - name: CONFIGDBPASS
           valueFrom:
             secretKeyRef:
@@ -86,7 +89,10 @@ spec:
         - name: REALTIMEDBSERVERS
           value: "{{ .Values.global.env.realtimeDbServers }}"
         - name: REALTIMEDBUSER
-          value: "{{ .Values.global.env.realtimeDbUser }}"
+          valueFrom:
+            secretKeyRef:
+              key: REALTIMEDBUSER
+              name: onesait-secret
         - name: REALTIMEDBPASS
           valueFrom:
             secretKeyRef:
@@ -126,7 +132,7 @@ spec:
             memory: "{{ .Values.flowengine.requests.memory }}"
 {{- end }}
       dnsPolicy: ClusterFirst
-{{- if .Values.global.sideCarContainersEnabled }}
+
       initContainers:
        - name: check-cp-status
          image: yauritux/busybox-curl
@@ -141,6 +147,7 @@ spec:
              cpu: "1m"
              memory: "1Mi"
 {{- end }}
+{{- if .Values.global.sideCarContainersEnabled }}
        - name: volume-mount
          image: busybox
          command: ["sh", "-c", "chmod 777 /tmp"]
