@@ -116,6 +116,9 @@ dashboard:
   limits:
     cpu: "500m"
     memory: "2Gi"
+  requests:
+    cpu: "1m"
+    memory: "1Mi"
 
 # Variables for dashboard exporter deployment/service
 dashboardexporter:
@@ -131,9 +134,6 @@ dashboardexporter:
   limits:
     cpu: "500m"
     memory: "1Gi"
-  requests:
-    cpu: "1m"
-    memory: "1Mi"
   requests:
     cpu: "1m"
     memory: "1Mi"

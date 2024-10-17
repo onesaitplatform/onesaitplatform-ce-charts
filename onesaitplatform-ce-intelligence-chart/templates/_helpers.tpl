@@ -11,6 +11,10 @@
 {{- default .Chart.Name .Values.dashboard.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
+{{- define "onesait-platform.dashboardexporter.name" -}}
+{{- default .Chart.Name .Values.dashboardexporter.nameOverride | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
 {{- define "onesait-platform.notebook.name" -}}
 {{- default .Chart.Name .Values.notebook.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
