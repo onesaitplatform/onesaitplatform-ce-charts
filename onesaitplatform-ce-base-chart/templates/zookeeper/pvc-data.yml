@@ -1,4 +1,4 @@
-{{- if (not .Values.global.skipPersistenceDeployment) }}
+{{- if and .Values.deployment.selector.zookeeper (not .Values.global.skipPersistenceDeployment) }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:

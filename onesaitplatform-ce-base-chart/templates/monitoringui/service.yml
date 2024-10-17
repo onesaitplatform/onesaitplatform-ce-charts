@@ -1,3 +1,4 @@
+{{- if .Values.deployment.selector.monitoringui }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -5,7 +6,7 @@ metadata:
   namespace: {{ .Release.Namespace }}  
   labels:
     run: {{ include "onesait-platform.monitoringui.name" . }}
-    k8s-app: {{ include "onesait-platform.monitoringui.name" . }}
+    k8s_app: {{ include "onesait-platform.monitoringui.name" . }}
 spec:
   ports:
   - port: {{ .Values.monitoringui.service.port }}
@@ -15,3 +16,4 @@ spec:
     app: {{ include "onesait-platform.monitoringui.name" . }}
   type: {{ .Values.monitoringui.service.type }}
   sessionAffinity: None
+{{- end }}

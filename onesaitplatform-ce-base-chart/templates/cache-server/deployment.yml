@@ -7,7 +7,7 @@ metadata:
     app: {{ include "onesait-platform.cacheserver.name" . }}
     group: {{ .Values.global.groupName }}
 spec:
-  replicas: {{ .Values.global.replicaInitCount }}
+  replicas: {{ .Values.cacheserver.replicas }}
   selector:
     matchLabels:
       app: {{ include "onesait-platform.cacheserver.name" . }}
@@ -75,11 +75,11 @@ spec:
 {{- if .Values.global.limitsEnabled }}
         resources:
           limits:
-            cpu: "500m"
-            memory: "1.2Gi"
+            cpu: "{{ .Values.cacheserver.limits.cpu }}"
+            memory: "{{ .Values.cacheserver.limits.memory }}"
           requests:
-            cpu: "1m"
-            memory: "1Mi"
+            cpu: "{{ .Values.cacheserver.requests.cpu }}"
+            memory: "{{ .Values.cacheserver.requests.memory }}"
 {{- end }}
       dnsPolicy: ClusterFirst
       restartPolicy: Always

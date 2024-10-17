@@ -62,11 +62,11 @@ spec:
 {{- if .Values.global.limitsEnabled }}
         resources:
           limits:
-            cpu: "500m"
-            memory: "4Gi"
+            cpu: "{{ .Values.realtimedb.limits.cpu }}"
+            memory: "{{ .Values.realtimedb.limits.memory }}"
           requests:
-            cpu: "1m"
-            memory: "1Mi"
+            cpu: "{{ .Values.realtimedb.requests.cpu }}"
+            memory: "{{ .Values.realtimedb.requests.memory }}"
 {{- end }}
       dnsPolicy: ClusterFirst
 {{- if .Values.global.sideCarContainersEnabled }}
@@ -83,7 +83,7 @@ spec:
              memory: "500Mi"
            requests:
              cpu: "1m"
-             memory: "128Mi"
+             memory: "1Mi"
 {{- end }}
       restartPolicy: Always
       volumes:

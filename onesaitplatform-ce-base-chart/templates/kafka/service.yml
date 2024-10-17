@@ -1,4 +1,4 @@
-{{- if .Values.global.env.kafkaEnabled }}
+{{- if and .Values.global.env.kafkaEnabled .Values.deployment.selector.kafka }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -6,7 +6,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     run: {{ include "onesait-platform.kafka.name" . }}
-    k8s-app: {{ include "onesait-platform.kafka.name" . }}
+    k8s_app: {{ include "onesait-platform.kafka.name" . }}
 spec:
   ports:
   - name: tcp

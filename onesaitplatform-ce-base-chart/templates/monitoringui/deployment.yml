@@ -1,3 +1,4 @@
+{{- if .Values.deployment.selector.monitoringui }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -64,7 +65,10 @@ spec:
         - name: CONFIGDBURL
           value: "{{ .Values.global.env.configDbUrl }}"
         - name: CONFIGDBUSER
-          value: "{{ .Values.global.env.configDbUser }}"
+          valueFrom:
+            secretKeyRef:
+              key: CONFIGDBUSER
+              name: onesait-secret
         - name: CONFIGDBPASS
           valueFrom:
             secretKeyRef:
@@ -75,7 +79,10 @@ spec:
         - name: CONFIGDB_DIALECT
           value: "{{ .Values.global.env.configDbDialect }}"             
         - name: REALTIMEDBUSER
-          value: "{{ .Values.global.env.realtimeDbUser }}"
+          valueFrom:
+            secretKeyRef:
+              key: REALTIMEDBUSER
+              name: onesait-secret
         - name: REALTIMEDBPASS
           valueFrom:
             secretKeyRef:
@@ -83,6 +90,12 @@ spec:
               name: onesait-secret
         - name: ONESAIT_PROPERTIES
           value: "{{ .Values.monitoringui.env.onesaitProperties }}"
+        - name: USE_KEYCLOAK
+          value: "{{ .Values.global.env.avdIdentityMngEnabled }}"
+        - name: ADMIN_API_KEY
+          value: "{{ .Values.global.env.avdIdentityMngAPIKey }}"
+        - name: OAUTH_SSO_ENABLED
+          value: "{{ .Values.global.env.oauthSSOEnabled }}"
         - name: HZ_SERVICE_DISCOVERY_STRATEGY
           value: "{{ .Values.global.env.hzServiceDiscoveryStrategy }}"          
         ports:
@@ -97,11 +110,11 @@ spec:
 {{- if .Values.global.limitsEnabled }}
         resources:
           limits:
-            cpu: "500m"
-            memory: "2Gi"
+            cpu: "{{ .Values.monitoringui.limits.cpu }}"
+            memory: "{{ .Values.monitoringui.limits.memory }}"
           requests:
-            cpu: "1m"
-            memory: "1Mi"
+            cpu: "{{ .Values.monitoringui.requests.cpu }}"
+            memory: "{{ .Values.monitoringui.requests.memory }}"
 {{- end }}
       dnsPolicy: ClusterFirst
       restartPolicy: Always
@@ -110,4 +123,5 @@ spec:
       - name: logs
         persistentVolumeClaim:
           claimName: logs-pvc
+{{- end }}
 {{- end }}

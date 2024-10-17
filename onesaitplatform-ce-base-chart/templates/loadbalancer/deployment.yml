@@ -7,7 +7,7 @@ metadata:
     app: {{ include "onesait-platform.loadbalancer.name" . }}
     group: {{ .Values.global.groupName }}
 spec:
-  replicas: {{ .Values.global.replicaInitCount }}
+  replicas: {{ .Values.loadbalancer.replicas }}
   selector:
     matchLabels:
       app: {{ include "onesait-platform.loadbalancer.name" . }}
@@ -85,11 +85,11 @@ spec:
 {{- if .Values.global.limitsEnabled }}
         resources:
           limits:
-            cpu: "50m"
-            memory: "250Mi"
+            cpu: "{{ .Values.loadbalancer.limits.cpu }}"
+            memory: "{{ .Values.loadbalancer.limits.memory }}"
           requests:
-            cpu: "25m"
-            memory: "128Mi"
+            cpu: "{{ .Values.loadbalancer.requests.cpu }}"
+            memory: "{{ .Values.loadbalancer.requests.memory }}"
 {{- end }}
       dnsPolicy: ClusterFirst
       restartPolicy: Always

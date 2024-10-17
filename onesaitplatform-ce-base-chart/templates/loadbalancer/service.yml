@@ -10,7 +10,7 @@ metadata:
 {{- end }}
   labels:
     run: {{ include "onesait-platform.loadbalancer.name" . }}
-    k8s-app: {{ include "onesait-platform.loadbalancer.name" . }}
+    k8s_app: {{ include "onesait-platform.loadbalancer.name" . }}
 spec:
 {{- if .Values.global.loadbalancerExternalTrafficPolicyClusterEnabled }}
   externalTrafficPolicy: Cluster
