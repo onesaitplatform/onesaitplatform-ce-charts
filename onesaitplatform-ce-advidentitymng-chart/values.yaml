@@ -4,6 +4,7 @@ global:
   replicaCount: 1
   limitsEnabled: true
   healthChecksEnabled: true
+  localStorageEnabled: false
   affinityNodeRules: false
   setNodesOnDeployments: false
   nodeKey: kubernetes.io/hostname

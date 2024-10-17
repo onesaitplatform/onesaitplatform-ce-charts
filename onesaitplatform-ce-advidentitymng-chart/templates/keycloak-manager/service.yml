@@ -5,7 +5,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     run: {{ include "onesait-platform.advidentitymanagermng.name" . }}
-    k8s-app: {{ include "onesait-platform.advidentitymanagermng.name" . }}
+    k8s_app: {{ include "onesait-platform.advidentitymanagermng.name" . }}
 spec:
   ports:
   - port: {{ .Values.advidentitymanagermng.service.port }}

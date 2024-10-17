@@ -62,7 +62,10 @@ spec:
         - name: PLATFORM_ADMIN_APIKEY
           value: "{{ .Values.global.env.platformAdminAPIKey }}"
         - name: KEYCLOAK_PASSWORD
-          value: "{{ .Values.advidentitymanager.env.keycloakPassword }}"
+          valueFrom:
+            secretKeyRef:
+              key: KEYCLOAK_PASSWORD
+              name: onesait-keycloak-secret
         ports:
         - containerPort: {{ .Values.advidentitymanagermng.service.targetPort }}
           name: 15500tcp155002
