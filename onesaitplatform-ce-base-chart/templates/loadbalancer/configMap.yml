@@ -49,7 +49,7 @@ data:
 
         proxy_set_header Host $host;
     }
-
+{{- if .Values.deployment.selector.monitoringui }}
       location /monitoring {
             proxy_pass  http://monitoringuiservice:18100/monitoring;
           proxy_read_timeout 360s;
@@ -61,7 +61,7 @@ data:
           proxy_set_header Connection "upgrade";
           proxy_set_header X-Forwarded-For $remote_addr;
       }
-
+{{ end }}
       location /web {
             alias /opt/bitnami/nginx/webprojects;
       }

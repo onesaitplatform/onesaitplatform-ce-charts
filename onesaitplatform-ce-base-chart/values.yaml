@@ -73,6 +73,7 @@ global:
     oauthSSOEnabled: "true"
     auditGlobalNotify: "false"
     elasticEnabled: false
+    opensearchEnabled: false
     httpLogLevel: "INFO"
     opendataPath: "opendata"
 
