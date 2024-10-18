@@ -7,7 +7,7 @@ metadata:
     app: {{ include "onesait-platform.controlpanel.name" . }}
     group: {{ .Values.global.groupName }}
 spec:
-  replicas: {{ .Values.global.replicaInitCount }}
+  replicas: {{ .Values.controlpanel.replicas }}
   selector:
     matchLabels:
       app: {{ include "onesait-platform.controlpanel.name" . }}
@@ -62,7 +62,10 @@ spec:
         - name: SCHEDULERDBBURL
           value: "{{ .Values.global.env.schedulerDbUrl }}"
         - name: SCHEDULERDBBUSER
-          value: "{{ .Values.global.env.schedulerDbUser }}"
+          valueFrom:
+            secretKeyRef:
+              key: SCHEDULERDBBUSER
+              name: onesait-secret
         - name: SCHEDULERDBBPASS
           valueFrom:
             secretKeyRef:
@@ -124,12 +127,17 @@ spec:
           value: "{{ .Values.global.env.auditGlobalNotify }}"
         - name: ELASTICSEARCH_ENABLED
           value: "{{ .Values.global.env.elasticEnabled }}"
+        - name: OPENSEARCH_ENABLED
+          value: "{{ .Values.global.env.opensearchEnabled }}"
         - name: CONFIGDBMASTERURL
           value: "{{ .Values.global.env.configDbMasterUrl }}"
         - name: CONFIGDBURL
           value: "{{ .Values.global.env.configDbUrl }}"
         - name: CONFIGDBUSER
-          value: "{{ .Values.global.env.configDbUser }}"
+          valueFrom:
+            secretKeyRef:
+              key: CONFIGDBUSER
+              name: onesait-secret
         - name: CONFIGDBPASS
           valueFrom:
             secretKeyRef:
@@ -140,7 +148,10 @@ spec:
         - name: CONFIGDB_DIALECT
           value: "{{ .Values.global.env.configDbDialect }}"
         - name: REALTIMEDBUSER
-          value: "{{ .Values.global.env.realtimeDbUser }}"
+          valueFrom:
+            secretKeyRef:
+              key: REALTIMEDBUSER
+              name: onesait-secret
         - name: REALTIMEDBPASS
           valueFrom:
             secretKeyRef:
@@ -187,24 +198,31 @@ spec:
         - mountPath: /usr/local/presto/catalog/
           name: presto-catalog
 {{- end }}
+        - mountPath: /tmp/configdb-data.conf
+          name: configdbdata
+          subPath: configdb-data.conf
 {{- if .Values.global.limitsEnabled }}
         resources:
           limits:
-            cpu: "2"
-            memory: "3Gi"
+            cpu: "{{ .Values.controlpanel.limits.cpu }}"
+            memory: "{{ .Values.controlpanel.limits.memory }}"
           requests:
-            cpu: "1m"
-            memory: "1Mi"
+            cpu: "{{ .Values.controlpanel.requests.cpu }}"
+            memory: "{{ .Values.controlpanel.requests.memory }}"
 {{- end }}
       dnsPolicy: ClusterFirst
       initContainers:
 {{- if and (not .Values.global.externalDatabase) (eq .Values.global.configDbType "mariadb") }}
        - name: check-db-status
-         image: mariadb:10.3.22
-         imagePullPolicy: {{ .Values.configinit.image.pullPolicy }}
+         image: mariadb:10.6.15
+         imagePullPolicy: {{ .Values.controlpanel.image.pullPolicy }}
          command: ['sh', '-c',
-          'until mysqladmin status -u root -pchangeIt! -h configdb -P 3306;
+          'until mysqladmin --defaults-extra-file=/tmp/configdb-data.conf status;
           do echo waiting for database; sleep 2; done;']
+         volumeMounts: 
+         - mountPath: /tmp/configdb-data.conf
+           name: configdbdata
+           subPath: configdb-data.conf
          env:
          - name: MYSQL_ROOT_PASSWORD
            value: "mypassword123"
@@ -215,14 +233,17 @@ spec:
              memory: "500Mi"
            requests:
              cpu: "1m"
-             memory: "128Mi"
+             memory: "1Mi"
 {{- end }}
        - name: check-config-data
-         image: mariadb:10.3.22
-         imagePullPolicy: {{ .Values.configinit.image.pullPolicy }}
+         image: mariadb:10.6.15
+         imagePullPolicy: {{ .Values.controlpanel.image.pullPolicy }}
          command: ["sh", "-c",
-          "until mysql -u root -pchangeIt! -h configdb -P 3306 onesaitplatform_config -e 'select count(*) from user';
-          do echo waiting for database to populate; sleep 5; done;"]
+          "until mysql --defaults-extra-file=/tmp/configdb-data.conf onesaitplatform_config -e 'select count(*) from user'; do echo waiting for database to populate; sleep 5; done;"]
+         volumeMounts: 
+         - mountPath: /tmp/configdb-data.conf
+           name: configdbdata
+           subPath: configdb-data.conf
          env:
          - name: MYSQL_ROOT_PASSWORD
            value: "mypassword123"
@@ -233,13 +254,13 @@ spec:
              memory: "500Mi"
            requests:
              cpu: "1m"
-             memory: "128Mi"
+             memory: "1Mi"
 {{- end }}
 {{- end }}
 {{- if and (not .Values.global.externalDatabase) (eq .Values.global.configDbType "postgresql") }}
        - name: check-db-status
          image: postgres:13-alpine
-         imagePullPolicy: {{ .Values.configinit.image.pullPolicy }}
+         imagePullPolicy: {{ .Values.controlpanel.image.pullPolicy }}
          command: ['sh', '-c',
           'until pg_isready -U postgres -h configdb -p 5432;
           do echo waiting for database; sleep 2; done;']
@@ -253,11 +274,11 @@ spec:
              memory: "500Mi"
            requests:
              cpu: "1m"
-             memory: "128Mi"
+             memory: "1Mi"
 {{- end }}
        - name: check-config-data
          image: postgres:13-alpine
-         imagePullPolicy: {{ .Values.configinit.image.pullPolicy }}
+         imagePullPolicy: {{ .Values.controlpanel.image.pullPolicy }}
          command: ["sh", "-c",
           "until psql postgresql://postgres:changeIt!@configdb:5432/onesaitplatform_config -c 'select count(*) from app_user';
           do echo waiting for database to populate; sleep 10; done;"]
@@ -271,7 +292,7 @@ spec:
              memory: "500Mi"
            requests:
              cpu: "1m"
-             memory: "128Mi"
+             memory: "1Mi"
 {{- end }}
 {{- end }}
 {{- if .Values.global.sideCarContainersEnabled }}
@@ -288,7 +309,7 @@ spec:
              memory: "500Mi"
            requests:
              cpu: "1m"
-             memory: "128Mi"
+             memory: "1Mi"
 {{- end }}
 {{- if .Values.global.webProjectsSharedPvc }}
        - name: volume-mount-webprojects
@@ -303,7 +324,7 @@ spec:
              memory: "500Mi"
            requests:
              cpu: "1m"
-             memory: "128Mi"
+             memory: "1Mi"
 {{- end }}
 {{- end }}
       restartPolicy: Always
@@ -334,3 +355,6 @@ spec:
         persistentVolumeClaim:
           claimName: presto-catalog-pvc
 {{- end }}
+      - name: configdbdata
+        secret:
+          secretName: configdb-data

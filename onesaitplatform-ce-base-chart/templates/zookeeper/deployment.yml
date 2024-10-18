@@ -1,3 +1,4 @@
+{{- if .Values.deployment.selector.zookeeper }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -71,11 +72,11 @@ spec:
 {{- if .Values.global.limitsEnabled }}
         resources:
           limits:
-            cpu: "500m"
-            memory: "500Mi"
+            cpu: "{{ .Values.zookeeper.limits.cpu }}"
+            memory: "{{ .Values.zookeeper.limits.memory }}"
           requests:
-            cpu: "1m"
-            memory: "1Mi"
+            cpu: "{{ .Values.zookeeper.requests.cpu }}"
+            memory: "{{ .Values.zookeeper.requests.memory }}"
 {{- end }}
       dnsPolicy: ClusterFirst
 {{- if .Values.global.sideCarContainersEnabled }}
@@ -115,3 +116,4 @@ spec:
       - name: zookeeper-data
         persistentVolumeClaim:
           claimName: zookeeperdata-pvc
+{{- end }}

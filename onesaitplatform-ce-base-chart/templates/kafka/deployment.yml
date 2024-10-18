@@ -1,4 +1,4 @@
-{{- if .Values.global.env.kafkaEnabled }}
+{{- if and .Values.global.env.kafkaEnabled .Values.deployment.selector.kafka }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -97,11 +97,11 @@ spec:
 {{- if .Values.global.limitsEnabled }}
         resources:
           limits:
-            cpu: "500m"
-            memory: "1Gi"
+            cpu: "{{ .Values.kafka.limits.cpu }}"
+            memory: "{{ .Values.kafka.limits.memory }}"
           requests:
-            cpu: "1m"
-            memory: "1Mi"
+            cpu: "{{ .Values.kafka.requests.cpu }}"
+            memory: "{{ .Values.kafka.requests.memory }}"
 {{- end }}
       dnsPolicy: ClusterFirst
 {{- if .Values.global.sideCarContainersEnabled }}
@@ -118,7 +118,7 @@ spec:
              memory: "500Mi"
            requests:
              cpu: "1m"
-             memory: "128Mi"
+             memory: "1Mi"
        - name: volume-mount-logs
          image: busybox
          command: ["sh", "-c", "chmod 777 /var/log/platform-logs && chown -R 1000:1000 /var/log/platform-logs"]
@@ -131,7 +131,7 @@ spec:
              memory: "500Mi"
            requests:
              cpu: "1m"
-             memory: "128Mi"             
+             memory: "1Mi"             
 {{- end }}
       restartPolicy: Always
       volumes:

@@ -59,11 +59,11 @@ spec:
 {{- if .Values.global.limitsEnabled }}
         resources:
           limits:
-            cpu: "500m"
-            memory: "800Mi"
+            cpu: "{{ .Values.configdb.limits.cpu }}"
+            memory: "{{ .Values.configdb.limits.memory }}"
           requests:
-            cpu: "1m"
-            memory: "128Mi"
+            cpu: "{{ .Values.configdb.requests.cpu }}"
+            memory: "{{ .Values.configdb.requests.memory }}"
 {{- end }}
       dnsPolicy: ClusterFirst
 {{- if .Values.global.sideCarContainersEnabled }}

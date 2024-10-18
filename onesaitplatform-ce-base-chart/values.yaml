@@ -41,13 +41,14 @@ global:
     - node: worker
     - node: worker2
   image:
-    tag: 6.0.0-ce
+    tag: 6.1.0-ce
   env:
     serverName: "localhost"
     ipHost: "127.0.0.1"
     configDbMasterUrl: "jdbc:mysql://configdb:3306/onesaitplatform_master_config?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&useSSL=false&autoReconnect=true"
     configDbUrl: "jdbc:mysql://configdb:3306/onesaitplatform_config?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&useSSL=true&autoReconnect=true&nullDatabaseMeansCurrent=true"
     schedulerDbUrl: "jdbc:mysql://configdb:3306/onesaitplatform_scheduler?useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&useSSL=false&autoReconnect=true"
+    configDbHost: "configdb"                        
     configDbUser: "root"
     configDbPass: "changeIt!"
     configDbDriver: "com.mysql.cj.jdbc.Driver"
@@ -72,9 +73,15 @@ global:
     oauthSSOEnabled: "true"
     auditGlobalNotify: "false"
     elasticEnabled: false
+    opensearchEnabled: false
     httpLogLevel: "INFO"
     opendataPath: "opendata"
 
+deployment:
+  selector:
+    monitoringui: false
+    zookeeper: true
+    kafka: true                 
 persistence:
     pvs:
       configdb: configdb-pv-volume
@@ -101,6 +108,12 @@ configdb:
     targetPort: 3306
   storage:
     size: 1Gi
+  requests:
+    cpu: 1m
+    memory: 1Mi
+  limits:
+    cpu: 800m
+    memory: 1500Mi             
 
 # Variables for realtimedb deployment/service/storage
 realtimedb:
@@ -117,6 +130,12 @@ realtimedb:
     size: 30Gi
   customWiredTiger: false
   wiredTigerSizeGB: 1 
+  requests:
+    cpu: 1m
+    memory: 1Mi
+  limits:
+    cpu: 1000m
+    memory: 4Gi              
 
 # Variables for zookeeper deployment/service
 zookeeper:
@@ -134,6 +153,12 @@ zookeeper:
   storage:
     dataSize: 5Gi
     logsSize: 5Gi
+  requests:
+    cpu: 1m
+    memory: 1Mi
+  limits:
+    cpu: 500m
+    memory: 1200Mi             
 
 # Variables for kafka deployment/service
 kafka:
@@ -162,6 +187,12 @@ kafka:
   storage:
     size: 21Gi
     logsSize: 10Gi
+  requests:
+    cpu: 1m
+    memory: 1Mi
+  limits:
+    cpu: 500m
+    memory: 2Gi             
 
 # Variables for elasticdb deployment/service/storage
 elasticdb:
@@ -180,6 +211,12 @@ elasticdb:
       targetPort: 9300
   storage:
     size: 10Gi
+  requests:
+    cpu: 1m
+    memory: 1Mi
+  limits:
+    cpu: 500m
+    memory: 3Gi             
 
 # Variables for configinit deployment
 configinit:
@@ -205,6 +242,12 @@ configinit:
     iotBrokerTimeout: 60000
     onesaitProperties:
     loadTestData: false
+  requests:
+    cpu: 1m
+    memory: 1Mi
+  limits:
+    cpu: 500m
+    memory: 2Gi             
 
 # Variables for controlpanel deployment
 controlpanel:
@@ -241,6 +284,13 @@ controlpanel:
     accessMode: ReadWriteOnce
     size: 2Gi
     prestoSize: 2Gi
+  requests:
+    cpu: 1m
+    memory: 1Mi
+  limits:
+    cpu: 2000m
+    memory: 3Gi
+  replicas: 1              
 
 # Variables for cacheserver deployment
 cacheserver:
@@ -254,6 +304,13 @@ cacheserver:
     targetPort: 20001
   env:
     onesaitProperties:
+  requests:
+    cpu: 1m
+    memory: 1Mi
+  limits:
+    cpu: 500m
+    memory: 1.5Gi
+  replicas: 1             
 
 # Variables for monitoringuiservice deployment/service
 monitoringui:
@@ -267,6 +324,13 @@ monitoringui:
     targetPort: 18100
   env:
     onesaitProperties:
+  requests:
+    cpu: 1m
+    memory: 1Mi
+  limits:
+    cpu: 500m
+    memory: 2Gi
+  replicas: 1             
 
 # Variables for load balancer / reverse proxy deployment/service
 # IMPORTANT: Use mainline tag for all modules deployed
@@ -287,6 +351,13 @@ loadbalancer:
       targetPort: 19999
   storage:
     size: 5Gi
+  requests:
+    cpu: 25m
+    memory: 128Mi
+  limits:
+    cpu: 50m
+    memory: 250Mi
+  replicas: 1            
 
 # Variables for ingress
 loadbalanceringress:

@@ -66,7 +66,10 @@ spec:
         - name: KC_DB
           value: "{{ .Values.advidentitymanager.env.dbVendor }}"
         - name: KC_DB_USERNAME
-          value: "{{ .Values.advidentitymanager.env.dbUser }}"
+          valueFrom:
+            secretKeyRef:
+              key: CONFIGDBUSER
+              name: onesait-secret
         - name: KC_DB_PASSWORD
           valueFrom:
             secretKeyRef:
@@ -85,7 +88,10 @@ spec:
         - name: KEYCLOAK_ADMIN
           value: "{{ .Values.advidentitymanager.env.keycloakUser }}"
         - name: KEYCLOAK_ADMIN_PASSWORD
-          value: "{{ .Values.advidentitymanager.env.keycloakPassword }}"
+          valueFrom:
+            secretKeyRef:
+              key: KEYCLOAK_PASSWORD
+              name: onesait-keycloak-secret
         - name: API_KEY
           value: "{{ .Values.global.env.administratorAPIKey }}"
         - name: KC_HOSTNAME_ADMIN_URL

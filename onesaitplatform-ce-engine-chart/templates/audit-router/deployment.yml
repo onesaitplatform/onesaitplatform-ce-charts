@@ -8,7 +8,7 @@ metadata:
     app: {{ include "onesait-platform.auditrouter.name" . }}
     group: {{ .Values.global.groupName }}
 spec:
-  replicas: {{ .Values.global.replicaCount }}
+  replicas: {{ .Values.auditrouter.replicas }}
   selector:
     matchLabels:
       app: {{ include "onesait-platform.auditrouter.name" . }}
@@ -69,7 +69,10 @@ spec:
         - name: CONFIGDBURL
           value: "{{ .Values.global.env.configDbUrl }}"
         - name: CONFIGDBUSER
-          value: "{{ .Values.global.env.configDbUser }}"
+          valueFrom:
+            secretKeyRef:
+              key: CONFIGDBUSER
+              name: onesait-secret
         - name: CONFIGDBPASS
           valueFrom:
             secretKeyRef:
@@ -80,7 +83,10 @@ spec:
         - name: CONFIGDB_DIALECT
           value: "{{ .Values.global.env.configDbDialect }}"              
         - name: REALTIMEDBUSER
-          value: "{{ .Values.global.env.realtimeDbUser }}"
+          valueFrom:
+            secretKeyRef:
+              key: REALTIMEDBUSER
+              name: onesait-secret
         - name: REALTIMEDBPASS
           valueFrom:
             secretKeyRef:
@@ -98,10 +104,14 @@ spec:
           value: "{{ .Values.auditrouter.env.opLogLevel }}"
         - name: HTTP_LOG_LEVEL
           value: "{{ .Values.global.env.httpLogLevel }}"
+{{- if not .Values.auditrouter.env.javaOptsDefault }}
         - name: JAVA_OPTS
           value: "{{ .Values.auditrouter.env.javaOpts }}"
+{{- end }}
         - name: ELASTICSEARCH_ENABLED
           value: "{{ .Values.global.env.elasticEnabled }}"
+        - name: OPENSEARCH_ENABLED
+          value: "{{ .Values.global.env.opensearchEnabled }}"
         ports:
         - containerPort: {{ .Values.auditrouter.service.targetPort }}
           name: 20002tcp200022

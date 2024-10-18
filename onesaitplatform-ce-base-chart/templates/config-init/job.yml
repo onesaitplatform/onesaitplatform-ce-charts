@@ -36,6 +36,10 @@ spec:
                 - {{ .node }}
                 {{- end }}
 {{ end }}
+      volumes:
+      - name: configdbdata
+        secret:
+          secretName: configdb-data
       containers:
       - name: load-realtimedb
         image: "{{ .Values.configinit.image.repository }}:{{ .Values.global.image.tag }}"
@@ -54,7 +58,10 @@ spec:
         - name: CONFIGDBURL
           value: "{{ .Values.global.env.configDbUrl }}"
         - name: CONFIGDBUSER
-          value: "{{ .Values.global.env.configDbUser }}"
+          valueFrom:
+            secretKeyRef:
+              key: CONFIGDBUSER
+              name: onesait-secret
         - name: CONFIGDBPASS
           valueFrom:
             secretKeyRef:
@@ -65,7 +72,10 @@ spec:
         - name: CONFIGDB_DIALECT
           value: "{{ .Values.global.env.configDbDialect }}"
         - name: REALTIMEDBUSER
-          value: "{{ .Values.global.env.realtimeDbUser }}"
+          valueFrom:
+            secretKeyRef:
+              key: REALTIMEDBUSER
+              name: onesait-secret
         - name: REALTIMEDBPASS
           valueFrom:
             secretKeyRef:
@@ -105,24 +115,32 @@ spec:
         - containerPort: 21000
           name: 21000tcp210002
           protocol: TCP
+        volumeMounts:
+        - mountPath: /tmp/configdb-data.conf
+          name: configdbdata
+          subPath: configdb-data.conf
 {{- if .Values.global.limitsEnabled }}
         resources:
           limits:
-            cpu: "500m"
-            memory: "2Gi"
+            cpu: "{{ .Values.configinit.limits.cpu }}"
+            memory: "{{ .Values.configinit.limits.memory }}"
           requests:
-            cpu: "1m"
-            memory: "1Mi"
+            cpu: "{{ .Values.configinit.requests.cpu }}"
+            memory: "{{ .Values.configinit.requests.memory }}"
 {{- end }}
       restartPolicy: Never
       initContainers:
 {{- if and (not .Values.global.externalDatabase) (eq .Values.global.configDbType "mariadb")  }}
        - name: check-db-status
-         image: mariadb:10.3.22
+         image: mariadb:10.6.15
          imagePullPolicy: {{ .Values.configinit.image.pullPolicy }}
          command: ['sh', '-c',
-          'until mysqladmin status -u root -pchangeIt! -h configdb -P 3306;
+          'until mysqladmin --defaults-extra-file=/tmp/configdb-data.conf status;
           do echo waiting for database; sleep 2; done;']
+         volumeMounts: 
+         - mountPath: /tmp/configdb-data.conf
+           name: configdbdata
+           subPath: configdb-data.conf
          env:
          - name: MYSQL_ROOT_PASSWORD
            value: "mypassword123"
@@ -171,13 +189,19 @@ spec:
          - name: CONFIGDBURL
            value: "{{ .Values.global.env.configDbUrl }}"
          - name: CONFIGDBUSER
-           value: "{{ .Values.global.env.configDbUser }}"
+           valueFrom:
+             secretKeyRef:
+               key: CONFIGDBUSER
+               name: onesait-secret
          - name: CONFIGDB_DRIVER
            value: "{{ .Values.global.env.configDbDriver }}"
          - name: CONFIGDB_DIALECT
            value: "{{ .Values.global.env.configDbDialect }}"
          - name: REALTIMEDBUSER
-           value: "{{ .Values.global.env.realtimeDbUser }}"
+           valueFrom:
+             secretKeyRef:
+               key: REALTIMEDBUSER
+               name: onesait-secret
          - name: REALTIMEDBSERVERS
            value: "{{ .Values.global.env.realtimeDbServers }}"
          - name: REALTIMEDBNAME
@@ -218,12 +242,12 @@ spec:
                name: onesait-secret
 {{- if .Values.global.limitsEnabled }}
          resources:
-           limits:
-             cpu: "500m"
-             memory: "2Gi"
-           requests:
-             cpu: "1m"
-             memory: "1Mi"
+          limits:
+            cpu: "{{ .Values.configinit.limits.cpu }}"
+            memory: "{{ .Values.configinit.limits.memory }}"
+          requests:
+            cpu: "{{ .Values.configinit.requests.cpu }}"
+            memory: "{{ .Values.configinit.requests.memory }}"
 {{- end }}
   backoffLimit: 1
 {{- end }}

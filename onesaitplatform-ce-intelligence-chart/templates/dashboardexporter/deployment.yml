@@ -1,0 +1,75 @@
+{{- if .Values.deployment.selector.dashboardexporter }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "onesait-platform.dashboardexporter.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "onesait-platform.dashboardexporter.name" . }}
+    group: {{ .Values.global.groupName }}
+spec:
+  replicas: {{ .Values.global.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "onesait-platform.dashboardexporter.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "onesait-platform.dashboardexporter.name" . }}
+    spec:
+{{- if .Values.global.affinityNodeRules }}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - {{ include "onesait-platform.dashboardexporter.name" . }}
+            topologyKey: {{ .Values.global.nodeKey }}
+{{ end }}
+{{- if .Values.global.setNodesOnDeployments }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: {{ .Values.global.nodeKey }}
+                operator: In
+                values:
+                {{- range .Values.global.workerNodes }}
+                - {{ .node }}
+                {{- end }}
+
+{{ end }}
+      containers:
+      - name: {{ include "onesait-platform.dashboardexporter.name" . }}
+        image: "{{ .Values.dashboardexporter.image.repository }}:{{ .Values.dashboardexporter.image.tag }}"
+        imagePullPolicy: {{ .Values.dashboardexporter.image.pullPolicy }}
+{{- if .Values.global.healthChecksEnabled }}
+        readinessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 20
+          periodSeconds: 5
+          successThreshold: 2
+          tcpSocket:
+            port: {{ .Values.dashboardexporter.service.targetPort }}
+          timeoutSeconds: 2
+{{- end }}
+        ports:
+        - containerPort: {{ .Values.dashboardexporter.service.targetPort }}
+          name: 19200tcp19200
+          protocol: TCP
+{{- if .Values.global.limitsEnabled }}
+        resources:
+          limits:
+            cpu: "{{ .Values.dashboardexporter.limits.cpu }}"
+            memory: "{{ .Values.dashboardexporter.limits.memory }}"
+          requests:
+            cpu: "{{ .Values.dashboardexporter.requests.cpu }}"
+            memory: "{{ .Values.dashboardexporter.requests.memory }}"
+{{- end }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+{{- end }}

@@ -1,4 +1,4 @@
-{{- if or (.Values.deployment.selector.dashboard) (.Values.deployment.selector.notebook) (.Values.deployment.selector.datacleaner) (.Values.deployment.selector.datalabeling) (.Values.deployment.selector.modelsmanager)}}
+{{- if or (.Values.deployment.selector.dashboard) (.Values.deployment.selector.notebook)}}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -15,10 +15,32 @@ data:
 
     location /dashboardengine/loginRest {
         proxy_pass http://dashboardengineservice:18300;
+{{- if .Values.dashboard.env.corsEnabled }}        
+        proxy_hide_header 'access-control-allow-origin'; 
+        add_header 'Access-control-allow-origin' '*';
+        add_header 'Access-Control-Allow-Headers' 'Authorization,Content-Type,pragma,cache-control' always;
+        add_header 'Access-Control-Allow-Credentials' 'true' always;
+        add_header 'Access-Control-Allow-Methods' 'GET,POST,OPTIONS' always;
+        add_header 'Allow' 'GET,POST,OPTIONS' always;
+        if ($request_method = OPTIONS) {
+            return 204;
+        }
+{{- end }}
     }
     
     location /dashboardengine/dsengine/rest/solver {
         proxy_pass http://dashboardengineservice:18300;
+{{- if .Values.dashboard.env.corsEnabled }}
+        proxy_hide_header 'access-control-allow-origin'; 
+        add_header 'Access-control-allow-origin' '*';
+        add_header 'Access-Control-Allow-Headers' 'Authorization,Content-Type,pragma,cache-control' always;
+        add_header 'Access-Control-Allow-Credentials' 'true' always;
+        add_header 'Access-Control-Allow-Methods' 'GET,POST,OPTIONS' always;
+        add_header 'Allow' 'GET,POST,OPTIONS' always;
+        if ($request_method = OPTIONS) {
+            return 204;
+        }
+{{- end }}
     }
 
     location /dashboardengine/dsengine/solver {

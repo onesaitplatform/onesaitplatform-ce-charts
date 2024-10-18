@@ -1,0 +1,19 @@
+{{- if .Values.deployment.selector.dashboardexporter }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "onesait-platform.dashboardexporter.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    run: {{ include "onesait-platform.dashboardexporter.name" . }}
+    k8s_app: {{ include "onesait-platform.dashboardexporter.name" . }}
+spec:
+  ports:
+  - port: {{ .Values.dashboardexporter.service.port }}
+    protocol: TCP
+    targetPort: {{ .Values.dashboardexporter.service.targetPort }}
+  selector:
+    app: {{ include "onesait-platform.dashboardexporter.name" . }}
+  type: {{ .Values.dashboardexporter.service.type }}
+  sessionAffinity: None
+{{- end }}

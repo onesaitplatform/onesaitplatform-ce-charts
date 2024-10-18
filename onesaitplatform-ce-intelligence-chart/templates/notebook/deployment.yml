@@ -62,6 +62,8 @@ spec:
           value: "8080"
         - name: USE_KEYCLOAK
           value: "{{ .Values.global.env.oauthSSOEnabled }}"
+        - name: ZEPPELIN_RUN_MODE
+          value: "{{ .Values.notebook.env.zeppelinRunMode }}"
         ports:
         - containerPort: {{ .Values.notebook.service.targetPort }}
           name: 8080tcp8080

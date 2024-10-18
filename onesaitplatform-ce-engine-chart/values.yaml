@@ -23,7 +23,7 @@ global:
     - node: worker
     - node: worker2
   image:
-    tag: 6.0.0-ce
+    tag: 6.1.0-ce
   env:
     serverName: "localhost"
     configDbMasterUrl: "jdbc:mysql://configdb:3306/onesaitplatform_master_config?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&useSSL=false&autoReconnect=true"
@@ -47,6 +47,7 @@ global:
     hzZookeeperUrl: zookeeper:2181
     auditGlobalNotify: "false"
     elasticEnabled: "false"
+    opensearchEnabled: false
     avdIdentityMngEnabled: "true"
     avdIdentityMngAPIKey: "0dfd700d66884fa9b7a1c2d1ddcc901d"
     oauthSSOEnabled: "true"
@@ -81,13 +82,15 @@ semanticinfbroker:
     notificationPoolSubscription: 50
     opLogLevel: "INFO"
     queriesDefaultLimit: "2000"
+    javaOptsDefault: true
     javaOpts:
   limits:
-    cpu: "500m"
-    memory: "2Gi"
+    cpu: "1000m"
+    memory: "2500Mi"
   requests:
     cpu: "1m"
     memory: "1Mi"
+  replicas: 1
 
 # Variables for IoT broker deployment/service
 iotbroker:
@@ -102,13 +105,15 @@ iotbroker:
   env:
     onesaitProperties:
     opLogLevel: "OFF"
+    javaOptsDefault: true
     javaOpts:
   limits:
-    cpu: "500m"
-    memory: "1.5Gi"
+    cpu: "1000m"
+    memory: "2Gi"
   requests:
     cpu: "1m"
     memory: "1Mi"
+  replicas: 1
 
 # Variables for API manager deployment/service
 apimanager:
@@ -123,11 +128,12 @@ apimanager:
   env:
     onesaitProperties:
   limits:
-    cpu: "500m"
-    memory: "1.6Gi"
+    cpu: "750m"
+    memory: "2Gi"
   requests:
     cpu: "1m"
     memory: "1Mi"
+  replicas: 1
 
 # Variables for flowengine deployment/service
 flowengine:
@@ -172,10 +178,12 @@ auditrouter:
     notificationPoolSubscriptionNotificator: 50
     notificationPoolSubscription: 50
     opLogLevel: "INFO"
+    javaOptsDefault: true
     javaOpts:
   limits:
     cpu: "500m"
-    memory: "1.5Gi"
+    memory: "1800Mi"
   requests:
     cpu: "1m"
     memory: "1Mi"
+  replicas: 1

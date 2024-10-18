@@ -6,7 +6,7 @@ metadata:
   namespace: {{ .Release.Namespace }}  
   labels:
     run: {{ include "onesait-platform.auditrouter.name" . }}
-    k8s-app: {{ include "onesait-platform.auditrouter.name" . }}
+    k8s_app: {{ include "onesait-platform.auditrouter.name" . }}
 spec:
   ports:
   - port: {{ .Values.auditrouter.service.port }}

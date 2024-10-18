@@ -8,7 +8,7 @@ metadata:
     app: {{ include "onesait-platform.apimanager.name" . }}
     group: {{ .Values.global.groupName }}
 spec:
-  replicas: {{ .Values.global.replicaCount }}
+  replicas: {{ .Values.apimanager.replicas }}
   selector:
     matchLabels:
       app: {{ include "onesait-platform.apimanager.name" . }}
@@ -69,7 +69,10 @@ spec:
         - name: CONFIGDBMASTERURL
           value: "{{ .Values.global.env.configDbMasterUrl }}"
         - name: CONFIGDBUSER
-          value: "{{ .Values.global.env.configDbUser }}"
+          valueFrom:
+            secretKeyRef:
+              key: CONFIGDBUSER
+              name: onesait-secret
         - name: CONFIGDBPASS
           valueFrom:
             secretKeyRef:
@@ -80,7 +83,10 @@ spec:
         - name: CONFIGDB_DIALECT
           value: "{{ .Values.global.env.configDbDialect }}"              
         - name: REALTIMEDBUSER
-          value: "{{ .Values.global.env.realtimeDbUser }}"
+          valueFrom:
+            secretKeyRef:
+              key: REALTIMEDBUSER
+              name: onesait-secret
         - name: REALTIMEDBPASS
           valueFrom:
             secretKeyRef:
@@ -94,6 +100,8 @@ spec:
           value: "{{ .Values.global.env.auditGlobalNotify }}"
         - name: ELASTICSEARCH_ENABLED
           value: "{{ .Values.global.env.elasticEnabled }}"
+        - name: OPENSEARCH_ENABLED
+          value: "{{ .Values.global.env.opensearchEnabled }}"
         - name: USE_KEYCLOAK
           value: "{{ .Values.global.env.avdIdentityMngEnabled }}"
         - name: ADMIN_API_KEY

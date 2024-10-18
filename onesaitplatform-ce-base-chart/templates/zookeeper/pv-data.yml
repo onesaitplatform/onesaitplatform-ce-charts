@@ -1,4 +1,4 @@
-{{- if and .Values.global.localStorageEnabled (not .Values.global.skipPersistenceDeployment) }}
+{{- if and .Values.global.localStorageEnabled (not .Values.global.skipPersistenceDeployment) .Values.deployment.selector.zookeeper }}
 apiVersion: v1
 kind: PersistentVolume
 metadata:
