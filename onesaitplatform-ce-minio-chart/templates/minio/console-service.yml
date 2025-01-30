@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.minio.service.consoleAppName }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    k8s_app: {{ .Values.minio.service.consoleAppName }}
+spec:
+  ports:
+  - port: {{ .Values.minio.service.consolePort }}
+    name: tcp
+  type: ClusterIP
+  selector:
+    app: {{ .Values.minio.service.consoleAppName }}

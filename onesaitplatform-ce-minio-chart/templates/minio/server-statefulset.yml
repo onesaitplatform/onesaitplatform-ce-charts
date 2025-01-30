@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Values.minio.service.servers.server }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ include "onesait-platform.minio.name" . }}
+      statefulset: {{ .Values.minio.service.servers.server }}
+  serviceName: {{ .Values.minio.service.servers.server }}
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: {{ include "onesait-platform.minio.name" . }}
+        statefulset: {{ .Values.minio.service.servers.server }}
+    spec:
+      terminationGracePeriodSeconds: 10
+{{- if .Values.global.setNodesOnDeployments }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: {{ .Values.global.nodeKey }}
+                operator: In
+                values:
+                {{- range .Values.global.workerNodes }}
+                - {{ .node }}
+                {{- end }}
+
+{{ end }}      
+      containers:
+        - name: {{ .Values.minio.service.servers.server }}
+          image: "{{ .Values.minio.image.serverRepository }}:{{ .Values.minio.image.serverTag }}"
+          args:
+            - server
+            - /mstorage
+            - --ftp=address=:{{ .Values.minio.service.ftp.port }}
+            - --ftp=passive-port-range={{ .Values.minio.service.ftp.range }}
+          env:
+            # Minio access key and secret key
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  key: MINIO_ROOT_USER
+                  name: onesait-minio-secret
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: MINIO_ROOT_PASSWORD
+                  name: onesait-minio-secret
+            - name: MINIO_BROWSER
+              value: "off"
+          ports:
+            - containerPort: {{ .Values.minio.service.serverPort }}
+            - containerPort: {{ .Values.minio.service.ftp.port }}
+          volumeMounts:
+            - name: storage-pv-1 
+              mountPath: "/mstorage"
+{{- if .Values.global.limitsEnabled }}
+          resources:
+            limits:
+              cpu: "{{ .Values.minio.limits.cpu }}"
+              memory: "{{ .Values.minio.limits.memory }}""
+            requests:
+              cpu: "{{ .Values.minio.requests.cpu }}"
+              memory: "{{ .Values.minio.requests.memory }}"
+{{- end }}
+{{- if .Values.global.healthChecksEnabled }}
+          readinessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 100
+            periodSeconds: 5
+            successThreshold: 2
+            tcpSocket:
+              port: {{ .Values.minio.service.serverTargetPort }}
+            timeoutSeconds: 10
+{{- end }}
+  volumeClaimTemplates:
+  - metadata:
+      name: storage-pv-1
+      annotations:
+        volume.beta.kubernetes.io/storage-class: {{ .Values.global.storageClassName }}
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: {{ .Values.minio.storage.size }}

@@ -37,7 +37,7 @@ helm install onesaitplatform/onesaitplatform-ce-base-chart \
                -f base-values.yml \
                --namespace <your_k8s_namespace> \
                --generate-name \
-               --version 6.0.0-ce
+               --version 6.2.0-ce
 ```
 
 After the installation of base chart, it is necessary to look for Administrator API Key and Platform Admin API Key and set them in Advanced Identity Manager values and change the value of ADMIN_API_KEY in ControlPanel deployment after installation. You can obtain them from configDB in onesaitplatform_master_config.master_user_token table.
@@ -57,7 +57,7 @@ helm install onesaitplatform/onesaitplatform-ce-advidentitymng-chart \
                -f advidentitymng-values.yml \
                --namespace <your_k8s_namespace> \
                --generate-name \
-               --version 6.0.0-ce
+               --version 6.2.0-ce
 ```
 
 - The advanced identity manager values can be overwritten with the following:
@@ -82,7 +82,7 @@ helm install onesaitplatform/onesaitplatform-ce-engine-chart \
                -f engine-values.yml \
                --namespace <your_k8s_namespace> \
                --generate-name \
-               --version 6.0.0-ce
+               --version 6.2.0-ce
 ```
 
 ```
@@ -90,7 +90,7 @@ helm install onesaitplatform/onesaitplatform-ce-intelligence-chart \
                -f intelligence-values.yml \
                --namespace <your_k8s_namespace> \
                --generate-name \
-               --version 6.0.0-ce
+               --version 6.2.0-ce
 ```
 
 - The engine/intelligence values can be overwritten with the following:

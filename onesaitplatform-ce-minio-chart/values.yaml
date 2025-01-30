@@ -1,0 +1,75 @@
+# Global Variables
+global:
+  groupName: op-minio-s3
+  limitsEnabled: false
+  healthChecksEnabled: false
+  storageClassName: local-storage
+  localStorageEnabled: false
+  localStoragePath: /datadrive
+  setIngressTLS: true
+  setNodesOnDeployments: false
+  nodeKey: kubernetes.io/hostname
+  cloudProvider: azure
+  workerNodes:
+    - node: worker1
+    - node: worker2
+
+persistence:
+  pvs:
+    minio: server1-pv1-volume
+
+minio:
+  nameOverride: minio
+  image:
+    serverRepository: onesaitplatform/minio-server
+    serverTag: 6-ce
+    consoleRepository: onesaitplatform/minio-console
+    consoleTag: 6-ce
+    browserRepository: onesaitplatform/minio-console
+    browserTag: browser-6-ce
+    pullPolicy: Always
+  service:
+    servers:
+      server: minio-server
+    consoles:
+      console: minio-console
+      browser: minio-browser
+      redirect:
+        console: https://minioadmin-example.onesaitplatform.com
+        browser: https://miniobrowser-example.onesaitplatform.com
+    loadbalancer:
+       consoleservername: minioadmin-example.onesaitplatform.com
+       browserservername: miniobrowser-example.onesaitplatform.com
+    type: ClusterIP
+    serverPort: 9000
+    serverTargetPort: 9000
+    ftp:
+      port: 9021 
+      range: 30000-40000
+    consolePort: 9090
+    consoleTargetPort: 9090
+    browserPort: 9090
+    browserTargetPort: 9090
+    consoleAppName: minio-console
+    browserAppName: minio-browser
+  storage:
+    size: 5Gi
+    pvSize: 5Gi
+  accesskey: onesaitCEMinio
+  secretkey: minio6ce
+  limits:
+    cpu: "1"
+    memory: "3Gi"
+  requests:
+    cpu: "1m"
+    memory: "1Mi"
+
+minioadminingress:
+  nameOverride: minio-admin
+  loadbalancername: loadbalancer
+  port: 9443
+
+miniobrowseringress:
+  nameOverride: minio-browser
+  loadbalancername: loadbalancer
+  port: 9443

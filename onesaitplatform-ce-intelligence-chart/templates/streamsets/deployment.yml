@@ -89,6 +89,8 @@ spec:
           value: "{{ .Values.streamsets.env.sdcConfOpAclGetUrl }}"
         - name: SDC_CONF_ONESAITPLATFORM_ADMIN_USER_TOKEN
           value: "{{ .Values.global.env.avdIdentityMngAPIKey }}"
+        - name: SDC_CONF_PIPELINE_ACCESS_CONTROL_ENABLED
+          value: "{{ .Values.streamsets.env.sdcConfPipelineAccessControlEnabled }}"
         ports:
         - containerPort: {{ .Values.streamsets.service.targetPort }}
           name: 18630tcp18630

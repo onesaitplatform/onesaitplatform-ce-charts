@@ -41,7 +41,7 @@ global:
     - node: worker
     - node: worker2
   image:
-    tag: 6.1.0-ce
+    tag: 6.2.0-ce
   env:
     serverName: "localhost"
     ipHost: "127.0.0.1"
@@ -94,6 +94,7 @@ persistence:
       zookeeperdata: zookeeper-pv-volume-data
       controlpanel: controlpanel-pv-volume
       loadbalancer: loadbalancer-pv-volume
+      presto: presto-catalog-pv-volume
 
 # Variables for configdb deployment/service/storage
 configdb:
@@ -120,7 +121,7 @@ realtimedb:
   nameOverride: realtimedb
   image:
     repository: onesaitplatform/realtimedb
-    tag: "6.0"
+    tag: "7.0"
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
@@ -278,6 +279,7 @@ controlpanel:
     ldapUrl: ""
     multitenancyEnabled: "false"
     notebookPlatformSSO: "true"
+    enableMetrics: "false"
     onesaitProperties: >-
       {"onesaitplatform":{"webproject":{"rootfolder":{"path":"/opt/bitnami/nginx/webprojects/"}}}}
   storage:

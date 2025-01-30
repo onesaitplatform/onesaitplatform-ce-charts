@@ -1,0 +1,10 @@
+# Global Variables
+minio:
+  service:
+    consoles:
+      redirect:
+        console: https://minioadmin-example.onesaitplatform.com
+        browser: https://miniobrowser-example.onesaitplatform.com
+    loadbalancer:
+       consoleservername: minioadmin-example.onesaitplatform.com
+       browserservername: miniobrowser-example.onesaitplatform.com
