@@ -1,5 +1,5 @@
 apiVersion: v2
-name: onesaitplatform-presto-minimal-chart
+name: onesaitplatform-ce-presto-chart
 description: Presto analytics for k8s
 home: https://cicd.onesaitplatform.com/gitlab/onesait-platform/onesaitplatform-operator.git
 type: application
