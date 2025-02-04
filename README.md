@@ -113,6 +113,58 @@ kubectl patch deployment loadbalancer --patch "$(cat onesaitplatform-ce-engine-c
 kubectl patch deployment loadbalancer --patch "$(cat onesaitplatform-ce-intelligence-chart/conf-files/nginx-config-volumes.yaml)"
 ```
 
+- In case you want to deploy minio/presto charts, the following instructions must be executed:
+
+```
+helm install onesaitplatform/onesaitplatform-ce-minio-chart \
+               -f minio-values.yml \
+               --namespace <your_k8s_namespace> \
+               --generate-name \
+               --version 6.2.0-ce
+```
+
+```
+helm install onesaitplatform/onesaitplatform-ce-presto-chart \
+               -f presto-values.yml \
+               --namespace <your_k8s_namespace> \
+               --generate-name \
+               --version 6.2.0-ce
+```
+
+- The Minio values can be overwritten with the following:
+
+```
+global:
+  storageClassName: managed-premium
+  localStorageEnabled: false
+
+minio:
+  service:
+    consoles:
+      redirect:
+        console: https://minioadmin-example.onesaitplatform.com
+        browser: https://miniobrowser-example.onesaitplatform.com
+    loadbalancer:
+       consoleservername: minioadmin-example.onesaitplatform.com
+       browserservername: miniobrowser-example.onesaitplatform.com
+```
+
+- The Presto values can be overwritten with the following:
+
+```
+# Global Variables
+global:
+  storageClassName: managed-premium
+  localStorageEnabled: false
+```
+
+- In order to access the modules included in minio/presto charts through loadbalancer, you should patch the loadbalancer deployment. This action can be done with the kubectl command:
+
+```
+kubectl patch deployment loadbalancer --patch "$(cat onesaitplatform-ce-minio-chart/conf-files/nginx-config-volumes.yaml)"
+kubectl patch deployment loadbalancer --patch "$(cat onesaitplatform-ce-presto-chart/conf-files/nginx-config-volumes.yaml)"
+```
+
 - There is also a plugin designed for this feature:
 
 ### Plugin installation

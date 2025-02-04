@@ -1,0 +1,4 @@
+# Global Variables
+global:
+  storageClassName: managed-premium
+  localStorageEnabled: false
