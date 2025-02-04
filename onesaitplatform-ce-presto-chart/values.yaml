@@ -1,0 +1,58 @@
+# Global Variables
+global:
+  groupName: op-presto-minimal
+  limitsEnabled: false
+  healthChecksEnabled: false
+  storageClassName: local-storage
+  localStorageEnabled: false
+  localStoragePath: /datadrive
+  setNodesOnDeployments: false
+  nodeKey: kubernetes.io/hostname
+  workerNodes:
+    - node: worker1
+    - node: worker2
+  env:
+    minio:
+      service: http://minio:9000
+    hive:
+      metastore:
+        uri: thrift://presto-metastore-server:9083
+    presto:
+      discovery:
+        uri: http://presto-coordinator:8080
+      coordinator1:
+        id: coordinator-worker
+      worker1:
+        id: worker-1
+      worker2:
+        id: worker-2
+
+presto:
+  nameOverride: presto
+  image:
+    metastoreServerRepository: onesaitplatform/presto-metastore-server
+    metastoreServerTag: 6-ce
+    prestoServerRepository: onesaitplatform/presto-server
+    prestoServerTag: 6-ce
+    pullPolicy: Always
+  service:
+    metastore:
+      server1: presto-metastore-server
+    presto: presto-coordinator
+    metastoreServerPort: 9083
+    metastoreServerTargetPort: 9083
+    metastoreServerAppName: presto-metastore-server
+    prestoServerPort: 8080
+    prestoServerTargetPort: 8080
+    prestoServerAppName: presto
+    metricsPort: 9483
+  metastore:
+    storage:
+      size: 1Gi
+      pvSize: 1Gi
+  limits:
+    cpu: "1"
+    memory: "1Gi"
+  requests:
+    cpu: "1m"
+    memory: "1Mi"

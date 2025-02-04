@@ -169,6 +169,8 @@ spec:
           value: "{{ .Values.global.env.oauthSSOEnabled }}"
         - name: NOTEBOOKPLATFORMAUTH
           value: "{{ .Values.controlpanel.env.notebookPlatformSSO }}"
+        - name: ENABLE_METRICS
+          value: "{{ .Values.controlpanel.env.enableMetrics }}"
 {{- if .Values.global.gcpFilesEnabled }}           
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: "/usr/local/gcp-credentials/.dockerconfigjson"

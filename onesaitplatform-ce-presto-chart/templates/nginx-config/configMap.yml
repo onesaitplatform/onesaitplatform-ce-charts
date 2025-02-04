@@ -1,0 +1,35 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: presto-config
+  namespace: {{ .Release.Namespace }}
+data:
+  presto-nginx.conf: |-
+     location /presto/ {
+     proxy_set_header Accept-Encoding "";
+     proxy_pass http://presto-coordinator:8080/;
+     
+     proxy_intercept_errors on;
+     
+     error_page 401 =302 /controlpanel/login;
+     
+     #proxy_redirect http://presto-coordinator:8080 $scheme://$host/presto/;
+     #proxy_redirect $scheme://$host/ $scheme://$host/presto/;
+     
+     location ~ "^/presto/ui/dist/(([^\/\.]+)).js" {
+             resolver localhost;
+             sub_filter_types application/javascript;
+             sub_filter_once off;
+             sub_filter "/v1/" "/presto/v1/";
+             proxy_pass http://presto-coordinator:8080/ui/dist/$1.js;
+     
+     }
+     location /presto/ui/timeline.html {
+             resolver localhost;
+             sub_filter_once off;
+             sub_filter "/v1/" "/presto/v1/";
+             proxy_pass http://presto-coordinator:8080/ui/timeline.html;
+     
+     }
+     
+     }

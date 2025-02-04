@@ -106,6 +106,8 @@ spec:
           value: "{{ .Values.iotbroker.env.onesaitProperties }}"
         - name: OP_LOG_LEVEL
           value: "{{ .Values.iotbroker.env.opLogLevel }}"
+        - name: ENABLE_METRICS
+          value: "{{ .Values.iotbroker.env.enableMetrics }}"
 {{- if not .Values.iotbroker.env.javaOptsDefault }}
         - name: JAVA_OPTS
           value: "{{ .Values.iotbroker.env.javaOpts }}"

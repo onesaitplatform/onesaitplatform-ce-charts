@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.minio.service.servers.server }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    k8s_app: {{ include "onesait-platform.minio.name" . }}
+spec:
+  ports:
+  - port: {{ .Values.minio.service.serverPort }}
+    name: tcp
+  - port: {{ .Values.minio.service.ftp.port }}
+    name: ftp
+  clusterIP: None
+  selector:
+    statefulset: {{ .Values.minio.service.servers.server }}

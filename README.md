@@ -37,7 +37,7 @@ helm install onesaitplatform/onesaitplatform-ce-base-chart \
                -f base-values.yml \
                --namespace <your_k8s_namespace> \
                --generate-name \
-               --version 6.0.0-ce
+               --version 6.2.0-ce
 ```
 
 After the installation of base chart, it is necessary to look for Administrator API Key and Platform Admin API Key and set them in Advanced Identity Manager values and change the value of ADMIN_API_KEY in ControlPanel deployment after installation. You can obtain them from configDB in onesaitplatform_master_config.master_user_token table.
@@ -57,7 +57,7 @@ helm install onesaitplatform/onesaitplatform-ce-advidentitymng-chart \
                -f advidentitymng-values.yml \
                --namespace <your_k8s_namespace> \
                --generate-name \
-               --version 6.0.0-ce
+               --version 6.2.0-ce
 ```
 
 - The advanced identity manager values can be overwritten with the following:
@@ -82,7 +82,7 @@ helm install onesaitplatform/onesaitplatform-ce-engine-chart \
                -f engine-values.yml \
                --namespace <your_k8s_namespace> \
                --generate-name \
-               --version 6.0.0-ce
+               --version 6.2.0-ce
 ```
 
 ```
@@ -90,7 +90,7 @@ helm install onesaitplatform/onesaitplatform-ce-intelligence-chart \
                -f intelligence-values.yml \
                --namespace <your_k8s_namespace> \
                --generate-name \
-               --version 6.0.0-ce
+               --version 6.2.0-ce
 ```
 
 - The engine/intelligence values can be overwritten with the following:
@@ -111,6 +111,58 @@ global:
 ```
 kubectl patch deployment loadbalancer --patch "$(cat onesaitplatform-ce-engine-chart/conf-files/nginx-config-volumes.yaml)"
 kubectl patch deployment loadbalancer --patch "$(cat onesaitplatform-ce-intelligence-chart/conf-files/nginx-config-volumes.yaml)"
+```
+
+- In case you want to deploy minio/presto charts, the following instructions must be executed:
+
+```
+helm install onesaitplatform/onesaitplatform-ce-minio-chart \
+               -f minio-values.yml \
+               --namespace <your_k8s_namespace> \
+               --generate-name \
+               --version 6.2.0-ce
+```
+
+```
+helm install onesaitplatform/onesaitplatform-ce-presto-chart \
+               -f presto-values.yml \
+               --namespace <your_k8s_namespace> \
+               --generate-name \
+               --version 6.2.0-ce
+```
+
+- The Minio values can be overwritten with the following:
+
+```
+global:
+  storageClassName: managed-premium
+  localStorageEnabled: false
+
+minio:
+  service:
+    consoles:
+      redirect:
+        console: https://minioadmin-example.onesaitplatform.com
+        browser: https://miniobrowser-example.onesaitplatform.com
+    loadbalancer:
+       consoleservername: minioadmin-example.onesaitplatform.com
+       browserservername: miniobrowser-example.onesaitplatform.com
+```
+
+- The Presto values can be overwritten with the following:
+
+```
+# Global Variables
+global:
+  storageClassName: managed-premium
+  localStorageEnabled: false
+```
+
+- In order to access the modules included in minio/presto charts through loadbalancer, you should patch the loadbalancer deployment. This action can be done with the kubectl command:
+
+```
+kubectl patch deployment loadbalancer --patch "$(cat onesaitplatform-ce-minio-chart/conf-files/nginx-config-volumes.yaml)"
+kubectl patch deployment loadbalancer --patch "$(cat onesaitplatform-ce-presto-chart/conf-files/nginx-config-volumes.yaml)"
 ```
 
 - There is also a plugin designed for this feature:

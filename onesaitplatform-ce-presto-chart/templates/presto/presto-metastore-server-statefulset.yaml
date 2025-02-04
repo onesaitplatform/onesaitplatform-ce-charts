@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Values.presto.service.metastore.server1 }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.presto.service.metastoreServerAppName }}
+      statefulset: {{ .Values.presto.service.metastore.server1 }}
+  serviceName: {{ .Values.presto.service.metastore.server1 }}
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.presto.service.metastoreServerAppName }}
+        statefulset: {{ .Values.presto.service.metastore.server1 }}
+    spec:
+      terminationGracePeriodSeconds: 10
+{{- if .Values.global.setNodesOnDeployments }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: {{ .Values.global.nodeKey }}
+                operator: In
+                values:
+                {{- range .Values.global.workerNodes }}
+                - {{ .node }}
+                {{- end }}
+                
+{{ end }}
+      containers:
+        - name: {{ .Values.presto.service.metastore.server1 }}
+          image: "{{ .Values.presto.image.metastoreServerRepository }}:{{ .Values.presto.image.metastoreServerTag }}"
+          env:
+           - name: MINIO_SERVER_ENDPOINT
+             value: {{ .Values.global.env.minio.service }}
+           - name: MINIO_ROOT_PASSWORD
+             valueFrom:
+               secretKeyRef:
+                 key: MINIO_ROOT_PASSWORD
+                 name: onesait-minio-secret
+           - name: MINIO_ROOT_USER
+             valueFrom:
+               secretKeyRef:
+                 key: MINIO_ROOT_USER
+                 name: onesait-minio-secret
+          ports:
+            - containerPort: {{ .Values.presto.service.metastoreServerPort }}
+          volumeMounts:
+            - mountPath: /var/lib/mysql
+              name: mysql-dir
+{{- if .Values.global.limitsEnabled }}
+          resources:
+            limits:
+              cpu: "{{ .Values.presto.limits.cpu }}"
+              memory: "{{ .Values.presto.limits.memory }}"
+            requests:
+              cpu: "{{ .Values.presto.requests.cpu }}"
+              memory: "{{ .Values.presto.requests.memory }}"
+{{- end }}
+{{- if .Values.global.healthChecksEnabled }}
+          readinessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 100
+            periodSeconds: 5
+            successThreshold: 2
+            tcpSocket:
+              port: {{ .Values.presto.service.metastoreServerTargetPort }}
+            timeoutSeconds: 10
+{{- end }}
+  volumeClaimTemplates:
+  - metadata:
+      name: mysql-dir
+      annotations:
+        volume.beta.kubernetes.io/storage-class: {{ .Values.global.storageClassName }}
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: {{ .Values.presto.metastore.storage.size }}

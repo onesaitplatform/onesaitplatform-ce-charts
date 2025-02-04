@@ -25,7 +25,7 @@ global:
     - node: worker
     - node: worker2
   image:
-    tag: 6.1.0-ce
+    tag: 6.2.0-ce
   env:
     serverName: "localhost"
     configDbMasterUrl: "jdbc:mysql://configdb:3306/onesaitplatform_master_config?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&useSSL=false&autoReconnect=true"
@@ -70,7 +70,7 @@ streamsets:
   version: 3.23.3
   image:
     repository: onesaitplatform/streamsets
-    tag: 6.1.0-3233
+    tag: 6.2.1-3233
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
@@ -90,6 +90,7 @@ streamsets:
     sdcConfOpImBaseUrl: "http://controlpanelservice:18000"
     sdcConfOpControlPanelApiBase: "http://controlpanelservice:18000"
     sdcConfOpAclGetUrl: "controlpanel/api/dataflows/pipelines"
+    sdcConfPipelineAccessControlEnabled: true
   storage:
     dataSize: 10Gi
     libsSize: 10Gi

@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.presto.service.prestoServerAppName }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.presto.service.prestoServerAppName }}
+      deployment: {{ .Values.presto.service.prestoServerAppName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.presto.service.prestoServerAppName }}
+        deployment: {{ .Values.presto.service.prestoServerAppName }}
+    spec:
+{{- if .Values.global.affinityNodeRules }}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - {{ .Values.presto.service.prestoServerAppName }}
+            topologyKey: "kubernetes.io/hostname"
+{{ end }}
+{{- if .Values.global.setNodesOnDeployments }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: {{ .Values.global.nodeKey }}
+                operator: In
+                values:
+                {{- range .Values.global.workerNodes }}
+                - {{ .node }}
+                {{- end }}
+
+{{ end }}
+      containers:
+      - image: "{{ .Values.presto.image.prestoServerRepository }}:{{ .Values.presto.image.prestoServerTag }}"
+        imagePullPolicy: {{ .Values.presto.image.pullPolicy }}
+        name: {{ .Values.presto.service.prestoServerAppName }}
+{{- if .Values.global.healthChecksEnabled }}
+        readinessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 100
+          periodSeconds: 5
+          successThreshold: 2
+          tcpSocket:
+            port: {{ .Values.presto.service.prestoServerTargetPort }}
+          timeoutSeconds: 2
+{{- end }}
+        volumeMounts:
+        - mountPath: /opt/presto/etc/catalog
+          name: presto-catalog
+        env:
+        - name: HIVE_METASTORE_URI
+          value: {{ .Values.global.env.hive.metastore.uri }}
+        - name: MINIO_SERVER_ENDPOINT
+          value: {{ .Values.global.env.minio.service }}
+        - name: PRESTO_DISCOVERY_URI
+          value: {{ .Values.global.env.presto.discovery.uri }}
+        - name: MINIO_ROOT_USER
+          valueFrom:
+            secretKeyRef:
+              key: MINIO_ROOT_USER
+              name: onesait-minio-secret
+        - name: MINIO_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: MINIO_ROOT_PASSWORD
+              name: onesait-minio-secret
+      restartPolicy: Always
+      volumes:
+      - name: presto-catalog
+        persistentVolumeClaim:
+          claimName: presto-catalog-pvc
+      terminationGracePeriodSeconds: 30

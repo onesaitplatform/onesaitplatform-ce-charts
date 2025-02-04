@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Values.minio.service.consoles.browser }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.minio.service.browserAppName }}
+      statefulset: {{ .Values.minio.service.consoles.browser }}
+  serviceName: {{ .Values.minio.service.consoles.browser }}
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.minio.service.browserAppName }}
+        statefulset: {{ .Values.minio.service.consoles.browser }}
+    spec:
+      terminationGracePeriodSeconds: 10
+{{- if .Values.global.setNodesOnDeployments }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: {{ .Values.global.nodeKey }}
+                operator: In
+                values:
+                {{- range .Values.global.workerNodes }}
+                - {{ .node }}
+                {{- end }}
+
+{{ end }}      
+      containers:
+        - name: {{ .Values.minio.service.consoles.browser }}
+          image: "{{ .Values.minio.image.browserRepository }}:{{ .Values.minio.image.browserTag }}"
+          args:
+            - server
+          env:
+            - name: CONSOLE_PBKDF_PASSPHRASE
+              value: "SECRET"
+            - name: CONSOLE_PBKDF_SALT
+              value: "SECRET"
+            - name: CONSOLE_MINIO_SERVER
+              value: "http://{{ include "onesait-platform.minio.name" . }}:{{ .Values.minio.service.serverPort }}"
+            - name: MINIO_BROWSER_REDIRECT_URL
+              value: "{{ .Values.minio.service.consoles.redirect.browser }}"
+          ports:
+            - containerPort: {{ .Values.minio.service.browserPort }}
+{{- if .Values.global.limitsEnabled }}
+          resources:
+            limits:
+              cpu: "{{ .Values.minio.limits.cpu }}"
+              memory: "{{ .Values.minio.limits.memory }}"
+            requests:
+              cpu: "{{ .Values.minio.requests.cpu }}"
+              memory: "{{ .Values.minio.requests.memory }}"
+{{- end }}
+{{- if .Values.global.healthChecksEnabled }}
+          readinessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 100
+            periodSeconds: 5
+            successThreshold: 2
+            tcpSocket:
+              port: {{ .Values.minio.service.browserTargetPort }}
+            timeoutSeconds: 10
+{{- end }}

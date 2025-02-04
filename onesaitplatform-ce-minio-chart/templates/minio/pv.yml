@@ -1,0 +1,29 @@
+{{- if .Values.global.localStorageEnabled }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Values.persistence.pvs.minio }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    type: local
+spec:
+  storageClassName: {{ .Values.global.storageClassName }}
+  capacity:
+    storage: {{ .Values.minio.storage.pvSize }}
+{{- if .Values.global.setNodesOnDeployments }}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: {{ .Values.global.nodeKey }}
+          operator: In
+          values:
+          {{- range .Values.global.workerNodes }}
+          - {{ .node }}
+          {{- end }}
+{{- end }}
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: {{ .Values.global.localStoragePath }}/onesaitplatform/minio/server-pv
+{{- end }}

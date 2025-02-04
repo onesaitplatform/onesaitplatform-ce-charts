@@ -1,0 +1,25 @@
+{{- if ne .Values.global.cloudProvider "aws" }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "onesait-platform.minioadminingress.name" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+{{- if .Values.global.setIngressTLS }}
+  tls:
+  - hosts:
+    - {{ .Values.minio.service.loadbalancer.consoleservername }}
+    secretName: loadbalancersecret
+{{- end }} 
+  rules:
+  - host: {{ .Values.minio.service.loadbalancer.consoleservername }}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Values.minioadminingress.loadbalancername }}
+            port:
+              number: {{ .Values.minioadminingress.port }}
+{{- end }}
