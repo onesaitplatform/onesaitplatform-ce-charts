@@ -18,40 +18,33 @@ helm repo update
 - You can override default chart values with the following, saving it as a file with yaml extension and passing it to the chart execution with -f flag. You will need to obtain Administrator API Key from advanced identity manager chart installation.
 
 ```
+# Global Variables
 global:
   storageClassName: managed-premium
-  storageClassProvisioned: false
-  logStorageClassName: Azurefile
   localStorageEnabled: false
-  env:
-    serverName: "example.onesaitplatform.com"
-    avdIdentityMngAPIKey: "d4d173323edb49cb8df923182863fda5"
+
+minio:
+  service:
+    consoles:
+      redirect:
+        console: https://minioadmin-example.onesaitplatform.com
+        browser: https://miniobrowser-example.onesaitplatform.com
+    loadbalancer:
+       consoleservername: minioadmin-example.onesaitplatform.com
+       browserservername: miniobrowser-example.onesaitplatform.com
 ```
 
 - Helm installation command:
 
 ```
-helm install onesaitplatform/onesaitplatform-ce-engine-chart \
-               -f engine-values.yml \
+helm install onesaitplatform/onesaitplatform-ce-minio-chart \
+               -f minio-values.yml \
                --namespace <your_k8s_namespace> \
                --generate-name \
                --version 6.2.0-ce
 ```
-- In order to access the modules included in engine chart through loadbalancer, you should patch the loadbalancer deployment. This action can be done with the kubectl command:
+- In order to access the modules included in minio chart through loadbalancer, you should patch the loadbalancer deployment. This action can be done with the kubectl command:
 
 ```
-kubectl patch deployment loadbalancer --patch "$(cat onesaitplatform-ce-engine-chart/conf-files/nginx-config-volumes.yaml)"
+kubectl patch deployment loadbalancer --patch "$(cat onesaitplatform-ce-minio-chart/conf-files/nginx-config-volumes.yaml)"
 ```
-
-- There is also a plugin designed for this feature:
-
-### Plugin installation
-
-```
-> helm plugin install https://github.com/onesaitplatform/patch-lb-helmplugin.git
-```
-
-### Plugin usage:
-
-```
-> helm addconfig --module engine

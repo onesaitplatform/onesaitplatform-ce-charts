@@ -20,38 +20,20 @@ helm repo update
 ```
 global:
   storageClassName: managed-premium
-  storageClassProvisioned: false
-  logStorageClassName: Azurefile
   localStorageEnabled: false
-  env:
-    serverName: "example.onesaitplatform.com"
-    avdIdentityMngAPIKey: "d4d173323edb49cb8df923182863fda5"
 ```
 
 - Helm installation command:
 
 ```
-helm install onesaitplatform/onesaitplatform-ce-engine-chart \
-               -f engine-values.yml \
+helm install onesaitplatform/onesaitplatform-ce-presto-chart \
+               -f presto-values.yml \
                --namespace <your_k8s_namespace> \
                --generate-name \
                --version 6.2.0-ce
 ```
-- In order to access the modules included in engine chart through loadbalancer, you should patch the loadbalancer deployment. This action can be done with the kubectl command:
+- In order to access the modules included in presto chart through loadbalancer, you should patch the loadbalancer deployment. This action can be done with the kubectl command:
 
 ```
-kubectl patch deployment loadbalancer --patch "$(cat onesaitplatform-ce-engine-chart/conf-files/nginx-config-volumes.yaml)"
+kubectl patch deployment loadbalancer --patch "$(cat onesaitplatform-ce-presto-chart/conf-files/nginx-config-volumes.yaml)"
 ```
-
-- There is also a plugin designed for this feature:
-
-### Plugin installation
-
-```
-> helm plugin install https://github.com/onesaitplatform/patch-lb-helmplugin.git
-```
-
-### Plugin usage:
-
-```
-> helm addconfig --module engine
