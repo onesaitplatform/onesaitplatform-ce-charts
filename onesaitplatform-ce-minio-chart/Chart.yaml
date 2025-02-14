@@ -5,8 +5,14 @@ home: https://cicd.onesaitplatform.com/gitlab/onesait-platform/onesaitplatform-o
 type: application
 version: "6.2.0-ce"
 appVersion: "0.43.1"
+keywords:
+  - Minsait
+  - Onesait platform
+  - Kubernetes
+  - IoT
+  - Analytics
 maintainers:
   - name: Onesait Platform
     email: support@onesaitplatform.com
     url: lab.onesaitplatform.com
-icon: https://avatars1.githubusercontent.com/u/44359141?s=460&v=4
+icon: https://raw.githubusercontent.com/onesaitplatform/onesaitplatform-ce-charts/2.1.0-ce/images/onesaitplatform.png

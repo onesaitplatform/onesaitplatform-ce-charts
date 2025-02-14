@@ -1,0 +1,19 @@
+{{- if .Values.deployment.selector.gitlabmanager }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "onesait-platform.gitlabmanager.name" . }}
+  namespace: {{ .Release.Namespace }}  
+  labels:
+    run: {{ include "onesait-platform.gitlabmanager.name" . }}
+    k8s_app: {{ include "onesait-platform.gitlabmanager.name" . }}
+spec:
+  ports:
+  - port: {{ .Values.gitlabmanager.service.port }}
+    protocol: TCP
+    targetPort: {{ .Values.gitlabmanager.service.targetPort }}
+  selector:
+    app: {{ include "onesait-platform.gitlabmanager.name" . }}
+  type: {{ .Values.gitlabmanager.service.type }}
+  sessionAffinity: None
+{{- end }}
