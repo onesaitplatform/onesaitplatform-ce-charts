@@ -1,0 +1,91 @@
+{{- if .Values.deployment.selector.gitlabmanager }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "onesait-platform.gitlabmanager.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "onesait-platform.gitlabmanager.name" . }}
+    group: {{ .Values.global.groupName }}
+spec:
+  replicas: {{ .Values.global.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "onesait-platform.gitlabmanager.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "onesait-platform.gitlabmanager.name" . }}
+    spec:
+{{- if .Values.global.setNodesOnDeployments }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: {{ .Values.global.nodeKey }}
+                operator: In
+                values:
+                {{- range .Values.global.workerNodes }}
+                - {{ .node }}
+                {{- end }}
+
+{{ end }}
+{{- if .Values.global.affinityNodeRules }}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - {{ include "onesait-platform.gitlabmanager.name" . }}
+            topologyKey: {{ .Values.global.nodeKey }}
+{{ end }}
+      containers:
+      - name: {{ include "onesait-platform.gitlabmanager.name" . }}
+        image: "{{ .Values.gitlabmanager.image.repository }}:{{ .Values.global.image.tag }}"
+        imagePullPolicy: {{ .Values.gitlabmanager.image.pullPolicy }}
+{{- if .Values.global.healthChecksEnabled }}
+        readinessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 20
+          periodSeconds: 5
+          successThreshold: 2
+          tcpSocket:
+            port: {{ .Values.gitlabmanager.service.targetPort }}
+          timeoutSeconds: 2
+{{- end }}
+        env:
+        - name: ADMIN_API_KEY
+          value: "{{ .Values.global.env.avdIdentityMngAPIKey }}"
+        - name: SERVER_NAME
+          value: "{{ .Values.global.env.serverName }}"
+        ports:
+        - containerPort: {{ .Values.gitlabmanager.service.targetPort }}
+          name: 10050tcp10050
+          protocol: TCP
+{{- if .Values.global.localStorageEnabled }}
+        volumeMounts:
+        - mountPath: /var/log/platform-logs
+          name: logs
+{{- end }}
+{{- if .Values.global.limitsEnabled }}
+        resources:
+          limits:
+            cpu: "{{ .Values.gitlabmanager.limits.cpu }}"
+            memory: "{{ .Values.gitlabmanager.limits.memory }}"
+          requests:
+            cpu: "{{ .Values.gitlabmanager.requests.cpu }}"
+            memory: "{{ .Values.gitlabmanager.requests.memory }}"
+{{- end }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+{{- if .Values.global.localStorageEnabled }}
+      volumes:
+      - name: logs
+        persistentVolumeClaim:
+          claimName: logs-pvc
+{{- end }}
+{{- end }}

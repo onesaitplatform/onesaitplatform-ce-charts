@@ -1,0 +1,71 @@
+# Global Variables
+global:
+  groupName: onesait-platform
+  replicaCount: 1
+  limitsEnabled: true
+  localStorageEnabled: false
+  localStoragePath: /datadrive
+  healthChecksEnabled: true
+  sideCarContainersEnabled: false
+  storageClassName: managed-premium
+  storageClassProvisioned: false
+  logStorageClassName: Azurefile
+  logStoragesize: 20Gi
+  storageClassOnPvcsEnabled: false
+  affinityNodeRules: false
+  setNodesOnDeployments: false
+  nodeKey: kubernetes.io/hostname
+  workerNodes:
+    - node: worker
+    - node: worker2
+  image:
+    tag: 6.2.0-ce
+  env:
+    serverName: "localhost"
+    configDbMasterUrl: "jdbc:mysql://configdb:3306/onesaitplatform_master_config?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&useSSL=false&autoReconnect=true"
+    configDbUrl: "jdbc:mysql://configdb:3306/onesaitplatform_config?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&useSSL=true&autoReconnect=true&nullDatabaseMeansCurrent=true"
+    schedulerDbUrl: "jdbc:mysql://configdb:3306/onesaitplatform_scheduler?useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&useSSL=false&autoReconnect=true"
+    configDbUser: "root"
+    configDbPass: "changeIt!"
+    configDbDriver: "com.mysql.cj.jdbc.Driver"
+    configDbDialect: "org.hibernate.dialect.MySQL5InnoDBDialect"
+    realtimeDbUser: "platformadmin"
+    realtimeDbPass: "0pen-platf0rm-2018!"
+    schedulerDbUser: "root"
+    schedulerDbPass: "changeIt!"
+    schedulerDbDriver: "com.mysql.cj.jdbc.Driver"
+    schedulerDbDialect: "org.hibernate.dialect.MySQL5Dialect"
+    quartzDriver: "org.quartz.impl.jdbcjobstore.StdJDBCDelegate"
+    realtimeDbWriteConcern: "UNACKNOWLEDGED"
+    realtimeDbServers: "realtimedb:27017"
+    realtimeDbName: "onesaitplatform_rtdb"
+    kafkaEnabled: "false"
+    kafkaHost: kafkaservice
+    hzServiceDiscoveryStrategy: zookeeper
+    hzZookeeperUrl: zookeeper:2181
+    auditGlobalNotify: "false"
+    minioEnabled: "false"
+    avdIdentityMngEnabled: true
+    avdIdentityMngAPIKey: "0dfd700d66884fa9b7a1c2d1ddcc901d"
+    oauthSSOEnabled: "true"
+    httpLogLevel: "INFO"
+
+deployment:
+  selector:
+    gitlabmanager: true
+    
+gitlabmanager:
+  nameOverride: gitlabmanagerservice
+  image:
+    repository: onesaitplatform/gitlab-manager
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 10050
+    targetPort: 10050
+  limits:
+    cpu: "250m"
+    memory: "1Gi"
+  requests:
+    cpu: "1m"
+    memory: "1Mi"
