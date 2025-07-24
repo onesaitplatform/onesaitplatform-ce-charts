@@ -5,7 +5,7 @@ global:
   storageClassProvisioned: false
   localStorageEnabled: false
   image:
-    tag: 6.2.0-ce
+    tag: 6.3.0-ce
   env:
     serverName: "example.onesaitplatform.com"
     kafkaEnabled: "false"

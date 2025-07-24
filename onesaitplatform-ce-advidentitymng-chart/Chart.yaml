@@ -3,7 +3,7 @@ name: onesaitplatform-ce-advidentitymng-chart
 description: Onesait Platform CE Advanced Identity Manager chart for k8s
 home: https://github.com/onesaitplatform/onesaitplatform-ce-charts
 type: application
-version: "6.2.0-ce"
+version: "6.3.0-ce"
 appVersion: "21.1.1"
 keywords:
   - Minsait

@@ -7,7 +7,7 @@ global:
   localStorageEnabled: false
   hostAliasEnabled: true
   image:
-    tag: 6.2.0-ce
+    tag: 6.3.0-ce
   env:
     serverName: "example.onesaitplatform.com"
     ipHost: "172.25.5.4"

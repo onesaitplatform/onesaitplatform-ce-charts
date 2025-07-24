@@ -35,7 +35,7 @@ helm install onesaitplatform/onesaitplatform-ce-engine-chart \
                -f engine-values.yml \
                --namespace <your_k8s_namespace> \
                --generate-name \
-               --version 6.2.0-ce
+               --version 6.3.0-ce
 ```
 - In order to access the modules included in engine chart through loadbalancer, you should patch the loadbalancer deployment. This action can be done with the kubectl command:
 

@@ -41,7 +41,7 @@ global:
     - node: worker
     - node: worker2
   image:
-    tag: 6.2.0-ce
+    tag: 6.3.0-ce
   env:
     serverName: "localhost"
     ipHost: "127.0.0.1"

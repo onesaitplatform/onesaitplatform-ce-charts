@@ -3,7 +3,7 @@ name: onesaitplatform-ce-minio-chart
 description: Onesait Platform CE MinIO S3 storage chart for k8s
 home: https://cicd.onesaitplatform.com/gitlab/onesait-platform/onesaitplatform-operator.git
 type: application
-version: "6.2.0-ce"
+version: "6.3.0-ce"
 appVersion: "0.43.1"
 keywords:
   - Minsait
